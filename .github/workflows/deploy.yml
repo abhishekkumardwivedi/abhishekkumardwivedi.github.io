@@ -1,5 +1,7 @@
 name: Deploy website to GitHub Pages
 
+# Astro is built and published through GitHub Actions.
+
 on:
   push:
     branches: [main]
