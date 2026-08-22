@@ -42,3 +42,29 @@
 .sl-markdown-content h2 {
   letter-spacing: -0.02em;
 }
+
+/* Compact document and article headers; the splash-page hero stays unchanged. */
+main > .content-panel:first-child {
+  padding-block: 0.65rem 0.75rem;
+}
+
+main > .content-panel:first-child h1 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+main > .content-panel + .content-panel {
+  padding-top: 1rem;
+}
+
+.sl-markdown-content h2 {
+  font-size: clamp(1.35rem, 2.25vw, 1.65rem);
+  margin-top: 1.75rem;
+}
+
+.sl-markdown-content h3 {
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+  margin-top: 1.4rem;
+}
