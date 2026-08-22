@@ -14,7 +14,7 @@ This section will grow into a practical library of tutorials, architecture expla
 - Functional safety, SOTIF, cybersecurity, and systems engineering
 - Product architecture, technical leadership, and innovation
 
-Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the foundations, then continue to [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/) for a system-level view.
+Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the foundations. Continue to [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/) to see how backbones, necks, heads, encoders, and decoders fit together. Then read [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/) for a system-level view.
 
 ## Publishing a new article
 
