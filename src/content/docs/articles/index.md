@@ -31,6 +31,15 @@ Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the fou
 
 Each article starts from the sensor or representation contract, compares appropriate model families, shows a generic architecture diagram and code example, and finishes with practical selection criteria. The series is educational and intentionally does not describe a specific product implementation.
 
+## Vehicle control and safety series
+
+1. [AURIX for Vehicle Control: Building a Deterministic Safety Island](/articles/aurix-vehicle-control/)
+2. [SOTIF in Practice: Finding the Unsafe Without a Fault](/articles/sotif-autonomous-driving/)
+3. [Functional Safety in Practice: From Hazard to Fault-Tolerant Control](/articles/functional-safety-av/)
+4. [AI Safety in the Vehicle: From Dataset to Runtime Guardrails](/articles/automotive-ai-safety/)
+
+This series follows the path from a high-level motion request to deterministic actuator control, then examines the same vehicle through SOTIF, functional-safety, and AI-safety lenses. The examples are practical but generic: they explain engineering methods without exposing a product architecture or replacing project-specific safety analysis.
+
 ## Publishing a new article
 
 Create a Markdown file under `src/content/docs/articles/`, add a title and description at the top, then push it to `main`. GitHub Actions will rebuild and publish the site automatically.
