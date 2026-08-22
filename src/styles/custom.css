@@ -141,3 +141,27 @@ main > .content-panel + .content-panel {
     min-height: auto;
   }
 }
+
+.mermaid {
+  overflow-x: auto;
+  margin-block: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.8rem;
+  background: #ffffff;
+}
+
+.mermaid svg {
+  display: block;
+  min-width: 36rem;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+@media (max-width: 44rem) {
+  .mermaid {
+    margin-inline: calc(-0.5 * var(--sl-content-pad-x));
+    padding: 0.75rem;
+  }
+}
