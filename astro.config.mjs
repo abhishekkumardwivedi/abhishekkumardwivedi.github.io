@@ -75,7 +75,8 @@ export default defineConfig({
                 { label: 'Spatial–Temporal Models', slug: 'articles/spatial-temporal-models' },
                 { label: 'BEV Model Selection', slug: 'articles/bev-model-selection' },
                 { label: 'World Models', slug: 'articles/world-models' },
-                { label: 'PyTorch Export & Compile', slug: 'articles/pytorch-export-compile' }
+                { label: 'PyTorch Export & Compile', slug: 'articles/pytorch-export-compile' },
+                { label: 'Model Atlas for Physical AI', slug: 'articles/model-atlas-physical-ai' }
               ]
             },
             {

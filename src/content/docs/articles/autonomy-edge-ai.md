@@ -31,5 +31,6 @@ Each starts from the sensor contract, compares suitable representation and model
 ## 4. Deployment
 
 1. [PyTorch Export & Compile](/articles/pytorch-export-compile/) — export, compilation, quantisation, lowering, packaging, and on-device runtime flow.
+2. [Model Atlas for Physical AI](/articles/model-atlas-physical-ai/) — a curated map of widely used perception, BEV, planning, manipulation, and vision–language–action models for autonomous vehicles and humanoid robots.
 
 Safety-focused material is grouped separately under [Safety & Assurance](/articles/safety-assurance/) so model design and safety arguments remain easy to navigate independently.
