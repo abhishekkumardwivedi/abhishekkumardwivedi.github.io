@@ -3,43 +3,44 @@ title: Articles
 description: Notes and tutorials on embedded platforms, automotive architecture, edge AI, and engineering leadership.
 ---
 
-This section will grow into a practical library of tutorials, architecture explanations, design notes, and lessons learned.
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-## Topics
+This is a structured engineering library rather than a chronological blog. Choose a domain below, or follow the suggested learning path if you are beginning with autonomy and edge AI.
 
-- Android, AAOS, Linux, Yocto, BSP, and system internals
-- Qualcomm automotive compute and heterogeneous acceleration
-- Edge AI, PyTorch compilation, ExecuTorch, GPU/NPU concepts
-- Autonomous-driving perception, fusion, planning, and simulation
-- Functional safety, SOTIF, cybersecurity, and systems engineering
-- Product architecture, technical leadership, and innovation
+<CardGrid>
+  <LinkCard title="Autonomy & Edge AI" description="Model foundations, sensor encoders, perception, BEV, temporal reasoning, world models, and deployment." href="/articles/autonomy-edge-ai/" />
+  <LinkCard title="Embedded & Automotive" description="Vehicle compute, deterministic control, embedded platforms, interfaces, and software-defined vehicle architecture." href="/articles/embedded-automotive/" />
+  <LinkCard title="Safety & Assurance" description="SOTIF, functional safety, AI assurance, cybersecurity, systems engineering, and release evidence." href="/articles/safety-assurance/" />
+  <LinkCard title="Algorithms & Problem Solving" description="Reusable algorithm patterns, data structures, complexity reasoning, and concise solution notes." href="/articles/algorithms/" />
+  <LinkCard title="Business, Product & Leadership" description="Product strategy, entrepreneurship, engineering management, organisational design, and innovation." href="/articles/business-leadership/" />
+</CardGrid>
 
-Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the foundations. Continue to [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/) to see how backbones, necks, heads, encoders, and decoders fit together. Then read [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/) for a system-level view.
+## Recommended autonomy learning path
 
-## Perception and deployment series
+Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the foundations. Continue to [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/) to see how backbones, necks, heads, encoders, and decoders fit together. Then read [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/) for the system-level view.
 
-1. [RGB Camera Encoders](/articles/rgb-camera-encoders/)
-2. [Event Camera Encoders](/articles/event-camera-encoders/)
-3. [LiDAR Encoders](/articles/lidar-encoders/)
-4. [Radar Encoders](/articles/radar-encoders/)
-5. [IMU & GNSS Models](/articles/imu-gnss-models/)
-6. [Ultrasonic Parking Models](/articles/ultrasonic-parking-models/)
-7. [Spatial–Temporal Models](/articles/spatial-temporal-models/)
-8. [BEV Model Selection](/articles/bev-model-selection/)
-9. [World Models](/articles/world-models/)
-10. [PyTorch Export & Compile](/articles/pytorch-export-compile/)
+From there, explore sensor-specific encoders, move into spatial–temporal modelling and BEV, then finish with world models and deployment. The [Autonomy & Edge AI section](/articles/autonomy-edge-ai/) provides the complete sequence.
 
-Each article starts from the sensor or representation contract, compares appropriate model families, shows a generic architecture diagram and code example, and finishes with practical selection criteria. The series is educational and intentionally does not describe a specific product implementation.
+## Complete classification
 
-## Vehicle control and safety series
+### Autonomy & Edge AI
 
-1. [AURIX for Vehicle Control: Building a Deterministic Safety Island](/articles/aurix-vehicle-control/)
-2. [SOTIF in Practice: Finding the Unsafe Without a Fault](/articles/sotif-autonomous-driving/)
-3. [Functional Safety in Practice: From Hazard to Fault-Tolerant Control](/articles/functional-safety-av/)
-4. [AI Safety in the Vehicle: From Dataset to Runtime Guardrails](/articles/automotive-ai-safety/)
+- **Foundations:** [Math Behind Modern AI](/articles/math-behind-modern-ai/) and [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/)
+- **System view:** [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/)
+- **Sensor intelligence:** [RGB camera](/articles/rgb-camera-encoders/), [event camera](/articles/event-camera-encoders/), [LiDAR](/articles/lidar-encoders/), [radar](/articles/radar-encoders/), [IMU & GNSS](/articles/imu-gnss-models/), and [ultrasonic](/articles/ultrasonic-parking-models/)
+- **Fusion and reasoning:** [Spatial–Temporal Models](/articles/spatial-temporal-models/), [BEV Model Selection](/articles/bev-model-selection/), and [World Models](/articles/world-models/)
+- **Deployment:** [PyTorch Export & Compile](/articles/pytorch-export-compile/)
 
-This series follows the path from a high-level motion request to deterministic actuator control, then examines the same vehicle through SOTIF, functional-safety, and AI-safety lenses. The examples are practical but generic: they explain engineering methods without exposing a product architecture or replacing project-specific safety analysis.
+### Embedded & Automotive
+
+- **Vehicle control:** [AURIX for Vehicle Control: Building a Deterministic Safety Island](/articles/aurix-vehicle-control/)
+
+### Safety & Assurance
+
+- **Intended functionality:** [SOTIF in Practice: Finding the Unsafe Without a Fault](/articles/sotif-autonomous-driving/)
+- **Malfunctioning behaviour:** [Functional Safety in Practice: From Hazard to Fault-Tolerant Control](/articles/functional-safety-av/)
+- **Learning-enabled systems:** [AI Safety in the Vehicle: From Dataset to Runtime Guardrails](/articles/automotive-ai-safety/)
 
 ## Publishing a new article
 
-Create a Markdown file under `src/content/docs/articles/`, add a title and description at the top, then push it to `main`. GitHub Actions will rebuild and publish the site automatically.
+Create a Markdown file under `src/content/docs/articles/`, add a title and description at the top, and add it to the appropriate section in the site navigation. GitHub Actions will rebuild and publish the site automatically.
