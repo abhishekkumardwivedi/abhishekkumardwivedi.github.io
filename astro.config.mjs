@@ -29,6 +29,9 @@ export default defineConfig({
         }
       ],
       customCss: ['./src/styles/custom.css'],
+      components: {
+        SiteTitle: './src/components/SiteTitle.astro'
+      },
       sidebar: [
         { label: 'Profile', items: [
           { label: 'Home', slug: '' },
