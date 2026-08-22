@@ -28,7 +28,7 @@ I work at the intersection of system architecture, platform engineering, and pro
     C++, Android/AOSP, Embedded Linux, Yocto, BSP, kernel, bootloader, middleware, camera, connectivity, and hardware–software debugging.
   </Card>
   <Card title="Edge AI & Autonomy" icon="rocket">
-    On-device inference, perception pipelines, heterogeneous acceleration, CARLA experimentation, and practical autonomous-system architecture.
+    On-device inference, perception pipelines, heterogeneous acceleration, autonomous-vehicle software-in-the-loop simulation, and practical system architecture.
   </Card>
   <Card title="Leadership & Innovation" icon="approve-check">
     Product architecture, technical leadership, OEM and supplier collaboration, and venture thinking grounded in strategic entrepreneurship.
