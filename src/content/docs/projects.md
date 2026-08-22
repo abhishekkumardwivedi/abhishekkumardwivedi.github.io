@@ -9,7 +9,7 @@ An AI-native digital engineering and systems-engineering platform for automotive
 
 ## Autonomous-driving experimentation
 
-A practical learning environment combining CARLA simulation, multimodal sensors, perception models, bird’s-eye-view generation, fusion, planning concepts, and model-deployment pipelines. The focus is understanding how L2+/L4 architectures translate from diagrams into executable systems.
+A practical autonomous-vehicle software-in-the-loop environment combining multimodal sensors, perception models, bird’s-eye-view generation, fusion, planning concepts, and model-deployment pipelines. The focus is understanding how L2+/L4 architectures translate from diagrams into executable systems.
 
 ## Connected predictive-maintenance platform
 
