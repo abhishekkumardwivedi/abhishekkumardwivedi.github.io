@@ -151,26 +151,42 @@ main > .content-panel + .content-panel {
   }
 }
 
-.mermaid {
+pre.mermaid {
   overflow-x: auto;
-  margin-block: 1.5rem;
-  padding: 1rem;
+  margin-block: 1.25rem;
+  padding: 0.75rem;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.8rem;
-  background: #ffffff;
 }
 
-.mermaid svg {
+/* Keep tall diagrams compact without shrinking labels more than necessary. */
+pre.mermaid[data-processed] svg {
   display: block;
-  min-width: 36rem;
-  max-width: 100%;
-  height: auto;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  max-height: min(38rem, 72vh);
+  height: auto !important;
   margin-inline: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
+:root[data-theme='light'] pre.mermaid[data-processed] {
+  background: #ffffff !important;
+}
+
+:root[data-theme='dark'] pre.mermaid[data-processed] {
+  background: #0f172a !important;
 }
 
 @media (max-width: 44rem) {
-  .mermaid {
+  pre.mermaid {
     margin-inline: calc(-0.5 * var(--sl-content-pad-x));
-    padding: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  pre.mermaid[data-processed] svg {
+    max-height: 30rem;
   }
 }

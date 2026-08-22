@@ -11,6 +11,22 @@ export default defineConfig({
   integrations: [
     mermaid({
       theme: 'neutral',
+      enableLog: false,
+      mermaidConfig: {
+        flowchart: {
+          diagramPadding: 8,
+          nodeSpacing: 24,
+          rankSpacing: 30,
+          padding: 10,
+          useMaxWidth: true,
+        },
+        state: {
+          nodeSpacing: 22,
+          rankSpacing: 30,
+          padding: 8,
+          useMaxWidth: true,
+        },
+      },
     }),
     starlight({
       title: 'Abhishek Kumar Dwivedi',
