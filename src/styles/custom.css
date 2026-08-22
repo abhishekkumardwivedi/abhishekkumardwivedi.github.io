@@ -68,3 +68,76 @@ main > .content-panel + .content-panel {
   font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   margin-top: 1.4rem;
 }
+
+/* Personal homepage */
+.home-intro {
+  max-width: 58rem;
+  margin: 0 auto 2.5rem;
+  text-align: center;
+}
+
+.home-eyebrow {
+  color: var(--sl-color-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.home-lead {
+  margin-top: 0.8rem;
+  color: var(--sl-color-white);
+  font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+  line-height: 1.55;
+  letter-spacing: -0.015em;
+}
+
+.home-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block: 2rem;
+}
+
+.home-principles > div {
+  display: flex;
+  min-height: 8rem;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.25rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--sl-color-gray-6) 72%, transparent);
+}
+
+.home-principles strong {
+  color: var(--sl-color-white);
+  font-size: 1.15rem;
+}
+
+.home-principles span {
+  margin-top: 0.45rem;
+  color: var(--sl-color-gray-2);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.home-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.home-links > * {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 44rem) {
+  .home-principles,
+  .home-links {
+    grid-template-columns: 1fr;
+  }
+
+  .home-principles > div {
+    min-height: auto;
+  }
+}
