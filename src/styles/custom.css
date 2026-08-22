@@ -1,0 +1,44 @@
+:root {
+  --sl-color-accent-low: #dbeafe;
+  --sl-color-accent: #1d4ed8;
+  --sl-color-accent-high: #172554;
+  --sl-color-white: #172033;
+  --sl-color-gray-1: #27344a;
+  --sl-color-gray-2: #46546a;
+  --sl-color-gray-3: #6a7890;
+  --sl-color-gray-4: #9ba7b9;
+  --sl-color-gray-5: #d8dee8;
+  --sl-color-gray-6: #edf1f6;
+  --sl-color-black: #f8fafc;
+  --sl-font: "Inter", "Aptos", "Segoe UI", sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #172554;
+  --sl-color-accent: #60a5fa;
+  --sl-color-accent-high: #dbeafe;
+  --sl-color-white: #f8fafc;
+  --sl-color-black: #0b1220;
+}
+
+.hero {
+  padding-block: clamp(3rem, 9vw, 7rem);
+}
+
+.hero h1 {
+  max-width: 16ch;
+  letter-spacing: -0.035em;
+}
+
+.hero .tagline {
+  max-width: 66ch;
+  line-height: 1.7;
+}
+
+.card {
+  border-radius: 0.8rem;
+}
+
+.sl-markdown-content h2 {
+  letter-spacing: -0.02em;
+}
