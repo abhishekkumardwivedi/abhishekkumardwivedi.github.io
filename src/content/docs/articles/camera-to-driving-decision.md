@@ -2,7 +2,7 @@
 title: From Camera Frame to Driving Decision
 description: A practical overview of perception, fusion, prediction, planning, and control in an autonomous-driving stack.
 sidebar:
-  order: 1
+  order: 2
 ---
 
 An autonomous-driving system does not convert a camera image directly into steering. It progressively transforms sensor observations into a model of the world, predicts how that world may change, selects a safe manoeuvre, and converts the manoeuvre into actuator commands.
