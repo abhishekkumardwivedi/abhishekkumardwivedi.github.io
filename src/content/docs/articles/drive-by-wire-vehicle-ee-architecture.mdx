@@ -1,0 +1,52 @@
+---
+title: Vehicle E/E Master Architecture
+description: A production-oriented electrical and electronic architecture for a scalable Drive-by-Wire electric vehicle platform.
+---
+
+import VehicleArchitecture from '../../../components/VehicleArchitecture.astro';
+
+# Vehicle E/E Master Architecture
+
+The Drive-by-Wire platform is the **physical execution layer of an autonomous electric vehicle**. It separates autonomous decision-making from deterministic, safety-oriented vehicle actuation.
+
+<VehicleArchitecture />
+
+## System boundary
+
+The autonomous stack should not directly control safety-critical actuators. It produces validated motion intent; the execution domain performs arbitration, plausibility checking, control and fault handling.
+
+## Execution domain
+
+The central concept is a **dual-redundant Motion Domain ECU** capable of maintaining vehicle control in the presence of selected single faults. The execution domain interfaces with steering actuators, brake actuation, four traction inverters, motor feedback, vehicle-dynamics sensors, power-management systems and Automotive Ethernet/CAN-FD networks.
+
+## Propulsion
+
+The reference platform uses four independently controlled traction motors. Each wheel can receive an independently commanded torque, enabling precise longitudinal control and torque-vectoring strategies. Each motor/inverter path includes feedback such as rotor position/resolver information and diagnostic status.
+
+## Braking
+
+The braking architecture combines **electro-hydraulic friction braking** with **regenerative braking**. The execution layer coordinates both sources while respecting wheel-slip, battery acceptance, thermal and fault constraints.
+
+## Steering
+
+Steering-by-Wire separates the driver's steering input from the road-wheel actuator. A production architecture requires redundant sensing, actuator monitoring, power independence and a defined degraded mode.
+
+## Power architecture
+
+The platform separates high-voltage propulsion energy from low-voltage control power. A fail-operational concept can use independent low-voltage power paths so that a single power-domain fault does not immediately remove all vehicle-control capability. The reference concept considers isolated **12 V and 48 V control-power banks**, with exact levels and redundancy refined during detailed safety analysis and component selection.
+
+## Vehicle network
+
+The communication backbone uses Automotive Ethernet for high-bandwidth domain/zonal communication and CAN-FD for appropriate deterministic control and legacy interfaces. A gateway/zonal strategy isolates body, powertrain, chassis and autonomy traffic while preserving required safety-critical paths.
+
+## Safety concept
+
+The platform is intended to be developed against a formal functional-safety concept. ASIL allocation, independence, diagnostic coverage, fault-tolerant time intervals and degraded states must be derived through the vehicle-level hazard analysis and safety lifecycle.
+
+## L2/L3 to L4 migration
+
+The vehicle execution architecture is intended to remain stable while perception compute, sensor suites and autonomy software evolve. This creates a hardware foundation for increasingly capable autonomous systems.
+
+## Next studies
+
+Future articles will break the platform down into Steering-by-Wire, Brake-by-Wire and regenerative blending, four-wheel propulsion and torque vectoring, HV battery/BMS/charging, redundant 12 V/48 V power, Ethernet/CAN-FD topology, body systems, fault trees/degraded modes and HIL/vehicle validation.
