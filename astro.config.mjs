@@ -80,6 +80,13 @@ export default defineConfig({
               ]
             },
             {
+              label: 'Drive-by-Wire Vehicle Platform',
+              items: [
+                { label: 'Section Overview', slug: 'articles/drive-by-wire' },
+                { label: 'Vehicle E/E Master Architecture', slug: 'articles/drive-by-wire-vehicle-ee-architecture' }
+              ]
+            },
+            {
               label: 'Embedded & Automotive',
               items: [
                 { label: 'Section Overview', slug: 'articles/embedded-automotive' },
