@@ -1,0 +1,105 @@
+---
+const nodes = [
+  { id: 'autonomy', title: 'Autonomy Compute', sub: 'Perception • Prediction • Planning', cls: 'ai' },
+  { id: 'motion', title: 'Motion Domain', sub: 'Dual-redundant safety-oriented control', cls: 'core' },
+  { id: 'steer', title: 'Steering-by-Wire', sub: 'Actuation + feedback', cls: 'act' },
+  { id: 'brake', title: 'Brake-by-Wire', sub: 'E/H + regenerative blend', cls: 'act' },
+  { id: 'drive', title: '4-Wheel Propulsion', sub: '4 inverters • motors • resolvers', cls: 'act' },
+  { id: 'power', title: 'HV / LV Power', sub: 'Battery • BMS • 12V / 48V', cls: 'power' },
+  { id: 'network', title: 'Vehicle Network', sub: 'Ethernet • CAN-FD • Gateway', cls: 'net' },
+];
+---
+
+<div class="va" data-architecture>
+  <div class="va-head">
+    <div>
+      <span class="eyebrow">INTERACTIVE SYSTEM ARCHITECTURE</span>
+      <h3>Drive-by-Wire Execution Platform</h3>
+      <p>Explore the vehicle execution layer. Click a subsystem to inspect its role and connections.</p>
+    </div>
+    <button type="button" class="reset" data-reset>Reset view</button>
+  </div>
+
+  <div class="canvas" role="application" aria-label="Interactive Drive-by-Wire architecture">
+    <div class="flow-label l1">Motion intent</div>
+    <div class="flow-label l2">Validated control</div>
+    <div class="flow-label l3">Actuation</div>
+
+    <div class="links" aria-hidden="true">
+      <span class="link v a"></span><span class="link v b"></span><span class="link v c"></span>
+      <span class="link h d"></span><span class="link h e"></span>
+      <span class="link v f"></span><span class="link v g"></span><span class="link v h"></span>
+    </div>
+
+    <div class="node-grid">
+      {nodes.map((node) => (
+        <button type="button" class={`node ${node.cls}`} data-node={node.id}>
+          <span class="dot"></span>
+          <strong>{node.title}</strong>
+          <small>{node.sub}</small>
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <aside class="inspector" data-inspector aria-live="polite">
+    <div class="inspector-empty">Select a subsystem above to inspect it.</div>
+  </aside>
+
+  <script is:inline>
+    const root = document.querySelector('[data-architecture]');
+    if (root) {
+      const info = {
+        autonomy: ['Autonomy Compute', 'Produces high-level motion intent. It does not directly drive safety-critical actuators.', ['motion']],
+        motion: ['Motion Domain', 'Deterministic execution layer responsible for command validation, arbitration, control and fault handling.', ['autonomy','steer','brake','drive','power','network']],
+        steer: ['Steering-by-Wire', 'Safety-critical lateral actuation with redundant sensing, actuator monitoring and defined degraded modes.', ['motion']],
+        brake: ['Brake-by-Wire', 'Coordinates electro-hydraulic friction braking and regenerative braking while respecting wheel and battery constraints.', ['motion']],
+        drive: ['4-Wheel Propulsion', 'Independent traction control through four inverter/motor paths with rotor-position feedback.', ['motion']],
+        power: ['HV / LV Power', 'Energy and control-power foundation: HV battery/BMS plus independent low-voltage paths for vehicle control.', ['motion']],
+        network: ['Vehicle Network', 'Communication fabric using Automotive Ethernet and CAN-FD with gateway/zonal isolation.', ['motion']],
+      };
+      const nodes = [...root.querySelectorAll('[data-node]')];
+      const panel = root.querySelector('[data-inspector]');
+      const reset = root.querySelector('[data-reset]');
+      function select(id) {
+        const item = info[id];
+        nodes.forEach(n => n.classList.toggle('selected', n.dataset.node === id));
+        nodes.forEach(n => n.classList.toggle('dim', n.dataset.node !== id && !item[2].includes(n.dataset.node)));
+        panel.innerHTML = `<div class="selected-title"><span class="status"></span><strong>${item[0]}</strong></div><p>${item[1]}</p><div class="connect-title">Connected domains</div><div class="chips">${item[2].map(x => `<span>${info[x][0]}</span>`).join('')}</div>`;
+      }
+      nodes.forEach(n => n.addEventListener('click', () => select(n.dataset.node)));
+      reset.addEventListener('click', () => { nodes.forEach(n => n.classList.remove('selected','dim')); panel.innerHTML = '<div class="inspector-empty">Select a subsystem above to inspect it.</div>'; });
+    }
+  </script>
+</div>
+
+<style>
+  .va { border: 1px solid var(--sl-color-gray-5); border-radius: 16px; overflow: hidden; margin: 2rem 0; background: var(--sl-color-bg); box-shadow: 0 8px 30px color-mix(in srgb, var(--sl-color-black) 8%, transparent); }
+  .va-head { padding: 1.25rem 1.4rem; display:flex; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--sl-color-gray-5); }
+  .eyebrow { font-size:.68rem; letter-spacing:.12em; font-weight:700; opacity:.65; }
+  .va h3 { margin:.3rem 0 .25rem; font-size:1.25rem; }
+  .va p { margin:0; font-size:.88rem; opacity:.75; }
+  .reset { align-self:center; border:1px solid var(--sl-color-gray-5); background:transparent; border-radius:8px; padding:.45rem .7rem; cursor:pointer; color:inherit; }
+  .canvas { position:relative; min-height:470px; padding:70px 28px 30px; overflow:auto; background:linear-gradient(180deg, color-mix(in srgb, var(--sl-color-gray-6) 12%, transparent), transparent 65%); }
+  .node-grid { position:relative; z-index:2; display:grid; grid-template-columns:repeat(3,minmax(150px,1fr)); gap:28px 20px; max-width:760px; margin:auto; }
+  .node { min-height:88px; text-align:left; border:1px solid var(--sl-color-gray-5); border-radius:12px; padding:14px; background:var(--sl-color-bg); color:inherit; cursor:pointer; transition:.22s ease; box-shadow:0 4px 12px color-mix(in srgb, var(--sl-color-black) 6%, transparent); }
+  .node:nth-child(1), .node:nth-child(2) { grid-column:2; }
+  .node:nth-child(2) { margin-top:4px; }
+  .node:nth-child(3) { grid-column:1; grid-row:3; }.node:nth-child(4){grid-column:2;grid-row:3}.node:nth-child(5){grid-column:3;grid-row:3}
+  .node:nth-child(6){grid-column:1;grid-row:4}.node:nth-child(7){grid-column:3;grid-row:4}
+  .node.ai { border-color: color-mix(in srgb, #3b82f6 45%, var(--sl-color-gray-5)); }
+  .node.core { border-width:2px; border-color:color-mix(in srgb, #10b981 55%, var(--sl-color-gray-5)); }
+  .node.act { border-color:color-mix(in srgb, #8b5cf6 35%, var(--sl-color-gray-5)); }
+  .node.power { border-color:color-mix(in srgb, #f59e0b 45%, var(--sl-color-gray-5)); }.node.net{border-color:color-mix(in srgb,#06b6d4 45%,var(--sl-color-gray-5));}
+  .node:hover,.node.selected { transform:translateY(-2px); box-shadow:0 8px 20px color-mix(in srgb, var(--sl-color-black) 12%, transparent); }
+  .node.selected { outline:2px solid color-mix(in srgb, #10b981 55%, transparent); outline-offset:2px; }
+  .node.dim { opacity:.25; filter:saturate(.4); }
+  .dot { display:block; width:7px; height:7px; border-radius:50%; background:#10b981; margin-bottom:9px; box-shadow:0 0 0 4px color-mix(in srgb,#10b981 12%,transparent); }
+  .node strong,.node small { display:block; }.node strong{font-size:.9rem}.node small{font-size:.7rem;opacity:.65;margin-top:4px;line-height:1.3}
+  .links { position:absolute; inset:70px 28px 30px; max-width:760px; margin:auto; z-index:1; pointer-events:none; }
+  .link { position:absolute; background:color-mix(in srgb,#10b981 38%,var(--sl-color-gray-5)); opacity:.75; }.link.v{width:2px}.link.h{height:2px}
+  .a{left:50%;top:88px;height:72px}.b{left:50%;top:202px;height:40px}.c{left:50%;top:242px;height:20px}.d{left:18%;right:18%;top:282px}.e{left:50%;top:282px;width:2px;height:45px}.f{left:18%;top:282px;height:105px}.g{left:50%;top:282px;height:105px}.h{right:18%;top:282px;height:105px}
+  .flow-label { position:absolute; z-index:3; font-size:.65rem; opacity:.55; background:var(--sl-color-bg); padding:2px 5px; border-radius:4px; }.l1{top:74px;left:calc(50% + 10px)}.l2{top:188px;left:calc(50% + 10px)}.l3{top:264px;left:calc(50% + 10px)}
+  .inspector { border-top:1px solid var(--sl-color-gray-5); padding:1rem 1.4rem; min-height:92px; }.inspector-empty{opacity:.6;font-size:.85rem}.selected-title{display:flex;align-items:center;gap:.5rem}.status{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 4px color-mix(in srgb,#10b981 12%,transparent)}.inspector p{margin:.45rem 0 .75rem;font-size:.85rem}.connect-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;opacity:.55}.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem}.chips span{font-size:.7rem;border:1px solid var(--sl-color-gray-5);border-radius:999px;padding:.25rem .5rem}
+  @media(max-width:650px){.canvas{min-height:620px;padding-left:14px;padding-right:14px}.node-grid{grid-template-columns:1fr;gap:12px}.node,.node:nth-child(n){grid-column:1;grid-row:auto;margin:0}.links,.flow-label{display:none}.va-head{flex-direction:column}.reset{align-self:flex-start}}
+</style>
