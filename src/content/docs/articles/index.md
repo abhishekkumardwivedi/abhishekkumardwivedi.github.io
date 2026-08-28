@@ -19,7 +19,7 @@ This is a structured engineering library rather than a chronological blog. Choos
 
 Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the foundations. Continue to [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/) to see how backbones, necks, heads, encoders, and decoders fit together. Then read [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/) for the system-level view.
 
-From there, explore sensor-specific encoders, move into spatial–temporal modelling and BEV, then finish with world models and deployment. The [Autonomy & Edge AI section](/articles/autonomy-edge-ai/) provides the complete sequence.
+From there, explore sensor-specific encoders, move into spatial–temporal modelling and BEV, then study **HD Maps & RTK Localization** before finishing with world models and deployment. The [Autonomy & Edge AI section](/articles/autonomy-edge-ai/) provides the complete sequence.
 
 ## Complete classification
 
@@ -28,6 +28,7 @@ From there, explore sensor-specific encoders, move into spatial–temporal model
 - **Foundations:** [Math Behind Modern AI](/articles/math-behind-modern-ai/) and [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/)
 - **System view:** [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/)
 - **Sensor intelligence:** [RGB camera](/articles/rgb-camera-encoders/), [event camera](/articles/event-camera-encoders/), [LiDAR](/articles/lidar-encoders/), [radar](/articles/radar-encoders/), [IMU & GNSS](/articles/imu-gnss-models/), and [ultrasonic](/articles/ultrasonic-parking-models/)
+- **Localization & maps:** [HD Maps & RTK Localization](/articles/hd-maps-rtk-localization/)
 - **Fusion and reasoning:** [Spatial–Temporal Models](/articles/spatial-temporal-models/), [BEV Model Selection](/articles/bev-model-selection/), and [World Models](/articles/world-models/)
 - **Deployment:** [PyTorch Export & Compile](/articles/pytorch-export-compile/)
 
