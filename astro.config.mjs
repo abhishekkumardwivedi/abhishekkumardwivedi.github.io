@@ -71,6 +71,7 @@ export default defineConfig({
                 { label: 'LiDAR Encoders', slug: 'articles/lidar-encoders' },
                 { label: 'Radar Encoders', slug: 'articles/radar-encoders' },
                 { label: 'IMU & GNSS Models', slug: 'articles/imu-gnss-models' },
+                { label: 'HD Maps & RTK Localization', slug: 'articles/hd-maps-rtk-localization' },
                 { label: 'Ultrasonic Parking Models', slug: 'articles/ultrasonic-parking-models' },
                 { label: 'Spatial–Temporal Models', slug: 'articles/spatial-temporal-models' },
                 { label: 'BEV Model Selection', slug: 'articles/bev-model-selection' },
