@@ -66,7 +66,7 @@ export default defineConfig({
                 { label: 'Math Behind Modern AI', slug: 'articles/math-behind-modern-ai' },
                 { label: 'Anatomy of a Perception Model', slug: 'articles/anatomy-of-a-perception-model' },
                 { label: 'Camera Frame to Driving Decision', slug: 'articles/camera-to-driving-decision' },
-                { label: 'RGB Camera Encoders', slug: 'articles/rgb-camera-encoders' },
+                { label: 'Camera Encoder: ResNet-50 + FPN', slug: 'articles/rgb-camera-encoders' },
                 { label: 'Event Camera Encoders', slug: 'articles/event-camera-encoders' },
                 { label: 'LiDAR Encoders', slug: 'articles/lidar-encoders' },
                 { label: 'Radar Encoders', slug: 'articles/radar-encoders' },
