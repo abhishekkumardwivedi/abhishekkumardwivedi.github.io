@@ -1,8 +1,8 @@
 ---
-title: RGB Camera Encoders
-description: How image representation, backbone families, multiscale features, and deployment constraints shape an RGB perception encoder.
+title: "Camera Encoder: ResNet-50 + FPN"
+description: "A hands-on deep dive into the camera encoder path, from RGB tensors through ResNet-50 and FPN to the feature handoff into temporal BEV fusion."
 sidebar:
-  order: 4
+  order: 5
 ---
 
 An RGB camera measures reflected light projected onto a two-dimensional sensor. It provides rich colour, texture, and semantic information, but it does not directly provide metric depth, object identity, or motion. Those must be inferred from appearance, geometry, time, or other observations.
@@ -14,125 +14,551 @@ flowchart TD
     A["Scene light"] --> B["Image sensor"]
     B --> C["ISP and calibration"]
     C --> D["Input tensor"]
-    D --> E["Image encoder"]
-    E --> F["Multiscale features"]
-    F --> G["Neck or decoder"]
-    G --> H["Task heads"]
+    D --> E["ResNet-50 camera encoder"]
+    E --> F["C2 / C3 / C4 / C5"]
+    F --> G["FPN"]
+    G --> H["P2 / P3 / P4 / P5"]
+    H --> I["Camera geometry"]
+    I --> J["Temporal BEV fusion"]
 ```
 
-## What the encoder receives
+## Camera Encoder: the component we want to understand
 
-The model commonly receives a tensor shaped as `[batch, channels, height, width]`. Before it reaches the encoder, the input contract may include:
+The camera encoder converts pixels into learned image-space features. In this article, the focus is deliberately on understanding the internals rather than treating the encoder as a black box.
 
-- colour order and transfer function;
-- bit depth and numerical range;
-- lens distortion handling;
-- resize, crop, and padding policy;
-- mean and standard-deviation normalisation;
-- exposure, gain, and quality metadata;
-- camera calibration and timestamp ownership.
+```text
+RGB Camera
+    |
+    v
+[ N, 3, H, W ]
+    |
+    v
+ResNet-50
+    |
+    +--> C2
+    +--> C3
+    +--> C4
+    +--> C5
+    |
+    v
+FPN
+    |
+    +--> P2
+    +--> P3
+    +--> P4
+    +--> P5
+    |
+    v
+Temporal BEV / downstream perception
+```
 
-A backbone trained on one contract may degrade severely when deployed with another. Preprocessing is part of the model interface.
+The important distinction is that **ResNet-50 + FPN creates image-space features. It does not by itself create the BEV representation.**
 
-## Major backbone families
+## 1. The input tensor
 
-### Residual CNNs
+The model commonly receives a tensor shaped as `[batch, channels, height, width]`:
 
-Residual networks use convolutional stages and skip connections. They provide predictable multiscale features, mature tooling, and broad operator support. They are useful baselines when portability and clear feature strides matter.
+```text
+[1, 3, 256, 448]
+```
 
-### Efficient mobile CNNs
+means one RGB image, 256 pixels high and 448 pixels wide.
 
-MobileNet- and EfficientNet-style backbones use depthwise separable convolution, inverted bottlenecks, channel attention, and compound scaling. They target better accuracy per operation, but theoretical operation counts do not guarantee target latency. Depthwise kernels may behave differently across accelerators.
+For a multi-camera system, synchronized images can conceptually be stacked as:
 
-### Modern convolutional backbones
+```text
+Camera 0 ─┐
+Camera 1 ─┤
+Camera 2 ─┤
+Camera 3 ─┤
+Camera 4 ─┼──> [8, 3, H, W]
+Camera 5 ─┤
+Camera 6 ─┤
+Camera 7 ─┘
+```
 
-ConvNeXt-style models incorporate design lessons from Transformers while retaining convolution. They can provide strong features with a familiar hierarchical structure.
+The batch dimension therefore becomes a systems decision involving parallelism, accelerator utilization, memory and latency.
 
-### Hierarchical vision Transformers
+## 2. Start with ResNet-50
 
-Windowed or pyramid Transformers build multiscale features using attention. They can capture wider context than local convolution, but memory, token count, operator support, and quantisation must be assessed carefully.
-
-### Plain vision Transformers
-
-A flat patch-token encoder is conceptually simple and benefits from global contextual reasoning. Dense prediction usually requires intermediate features, token reshaping, or a decoder that reconstructs spatial hierarchy.
-
-### Hybrid encoders
-
-Hybrid designs combine convolution for local structure and efficient early processing with attention or state-space blocks for broader context. The trade-off is a more complex compilation and tuning surface.
-
-## Selection matrix
-
-| Priority | Backbone bias to investigate |
-|---|---|
-| Mature deployment and multiscale outputs | Residual or modern hierarchical CNN |
-| Tight compute and memory envelope | Mobile-oriented CNN |
-| Strong global context | Hierarchical attention or hybrid |
-| Long spatial sequences with efficient scaling | State-space or hybrid hierarchy |
-| Maximum reuse across several dense tasks | Backbone exposing stable intermediate stages |
-
-This is a starting point, not a universal ranking. Input resolution, neck, heads, precision, compiler, and memory movement can dominate the final result.
-
-## A generic multiscale encoder wrapper
+TorchVision provides a pretrained ResNet-50 implementation:
 
 ```python
 import torch
-import torch.nn as nn
+from torchvision.models import resnet50, ResNet50_Weights
 
-
-class ImageEncoder(nn.Module):
-    """Illustrative hierarchy; replace stages with a chosen family."""
-
-    def __init__(self):
-        super().__init__()
-        self.stem = nn.Sequential(
-            nn.Conv2d(3, 32, 3, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(32),
-            nn.SiLU(),
-        )
-        self.stage2 = nn.Conv2d(32, 64, 3, stride=2, padding=1)
-        self.stage3 = nn.Conv2d(64, 128, 3, stride=2, padding=1)
-        self.stage4 = nn.Conv2d(128, 256, 3, stride=2, padding=1)
-
-    def forward(self, image: torch.Tensor) -> dict[str, torch.Tensor]:
-        x = self.stem(image)
-        c2 = torch.relu(self.stage2(x))
-        c3 = torch.relu(self.stage3(c2))
-        c4 = torch.relu(self.stage4(c3))
-        return {"c2": c2, "c3": c3, "c4": c4}
-
-
-encoder = ImageEncoder().eval()
-features = encoder(torch.randn(1, 3, 512, 512))
-print({name: tuple(value.shape) for name, value in features.items()})
+weights = ResNet50_Weights.DEFAULT
+model = resnet50(weights=weights)
+model.eval()
 ```
 
-The point is not the layers. It is the explicit multiscale contract. A neck or decoder can use high-resolution detail from `c2` and stronger semantics from deeper stages.
+The pretrained checkpoint contains learned numerical parameters. A training checkpoint may also contain optimizer state and metadata depending on how it was saved.
 
-## How to evaluate candidates
+A useful mental model is:
 
-Compare candidates using the complete inference graph:
+```text
+Neural network
+    = computation graph
+    + learned tensors
+```
 
-1. Fix the input contract and representative dataset.
-2. Attach the actual style of neck and heads required by the task.
-3. Measure task quality, calibration, and behaviour under difficult conditions.
-4. Export the graph and inspect unsupported operations.
-5. Measure latency distribution, not only average latency.
-6. Record peak activation memory and data-transfer cost.
-7. Test the intended precision, including quantised execution.
-8. Evaluate startup, thermal stability, and concurrent workloads.
+## 3. Why `.eval()` matters
 
-The best encoder is the one that preserves the necessary information and remains reliable inside the product’s complete compute and lifecycle constraints.
+Inference should use evaluation behaviour:
 
-## What remains outside the backbone
+```python
+model.eval()
+```
 
-An image encoder does not by itself solve perception. The wider model may still require:
+This is important for layers such as BatchNorm and Dropout. Evaluation mode makes profiling and comparison experiments repeatable.
 
-- multiscale aggregation;
-- geometry-aware lifting or projection;
-- temporal memory;
-- task-specific decoding;
-- uncertainty estimation;
-- post-processing and coordinate conversion;
-- cross-sensor or cross-view fusion.
+## 4. Why image resolution matters
 
-Backbone selection is therefore an architectural decision, not a model-completion decision.
+Suppose a camera frame is resized from:
+
+```text
+1920 × 1080
+```
+
+to:
+
+```text
+960 × 540
+```
+
+The pixel count falls from 2,073,600 to 518,400 — a 4× reduction.
+
+For a standard convolution, a useful approximation is:
+
+$$
+\text{FLOPs} \approx 2HWC_{in}C_{out}K^2
+$$
+
+Therefore, resolution is both an accuracy decision and a silicon decision.
+
+## 5. CPU, GPU and NPU
+
+The same convolution can execute on very different compute engines:
+
+```text
+CPU
+ └─ flexible control + SIMD/vector execution
+
+GPU
+ └─ massively parallel tensor computation
+
+NPU
+ └─ specialized tensor acceleration
+```
+
+Peak TOPS alone does not determine latency. Memory movement, operator support, compiler efficiency, tensor layout and workload contention also matter.
+
+## 6. Memory traffic matters
+
+A useful simplified model is:
+
+$$
+\tau \approx \max\left(\frac{\text{FLOPs}}{\text{Peak Compute}},\frac{\text{Bytes}}{\text{Memory Bandwidth}}\right)+\tau_{overhead}
+$$
+
+This gives us two broad regimes:
+
+```text
+Compute bound -> arithmetic throughput limits speed
+Memory bound  -> tensor movement limits speed
+```
+
+This is why optimizing only FLOPs can be misleading.
+
+## 7. ResNet-50 and the residual block
+
+The central ResNet idea is:
+
+$$
+H(x)=F(x)+x
+$$
+
+Conceptually:
+
+```text
+              +-------------------+
+              |                   |
+Input x ------+--> F(x) ----------+--> Add --> Output
+```
+
+ResNet-50 uses bottleneck blocks:
+
+```text
+Input
+  |
+  +------------------------------+
+  |                              |
+  v                              |
+1×1 Conv                         |
+  |                              |
+  v                              |
+3×3 Conv                         |
+  |                              |
+  v                              |
+1×1 Conv                         |
+  |                              |
+  +-------------> Add <----------+
+                   |
+                   v
+                  ReLU
+```
+
+The 1×1 layers transform channel dimensions around the spatial 3×3 convolution.
+
+## 8. C2, C3, C4 and C5
+
+As we move deeper into ResNet:
+
+```text
+Spatial resolution  ↓
+Semantic abstraction ↑
+```
+
+For a 256×448 input, a useful conceptual hierarchy is:
+
+```text
+Input : 256 × 448
+  |
+ C2   : 64 × 112
+  |
+ C3   : 32 × 56
+  |
+ C4   : 16 × 28
+  |
+ C5   : 8 × 14
+```
+
+C2 preserves more spatial detail. C5 provides stronger semantic/contextual representation at a coarser grid.
+
+> **C2 knows more about where; C5 knows more about what and context.**
+
+## 9. Why FPN exists
+
+ResNet is the backbone. FPN is a separate feature-aggregation architecture.
+
+```text
+             C5
+              |
+              v
+             P5
+              |
+          upsample
+              |
+              +------ C4
+                         |
+                         v
+                        P4
+                         |
+                      upsample
+                         |
+                         +------ C3
+                                    |
+                                    v
+                                   P3
+                                    |
+                                 upsample
+                                    |
+                                    +------ C2
+                                               |
+                                               v
+                                              P2
+```
+
+The top-down pathway brings semantic information toward higher-resolution maps. Lateral connections preserve spatial information.
+
+The resulting pyramid provides:
+
+```text
+P2 -> fine spatial detail
+P3 -> medium scale
+P4 -> larger objects/context
+P5 -> coarse grid + strong context
+```
+
+## 10. Inspect the actual FPN tensors
+
+```python
+import torch
+from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
+
+backbone = resnet_fpn_backbone(
+    "resnet50",
+    weights="DEFAULT"
+)
+backbone.eval()
+
+frame = torch.zeros(1, 3, 600, 800)
+frame[:, :, 200:400, 300:500] = 1.0
+
+with torch.no_grad():
+    features = backbone(frame)
+
+for name, tensor in features.items():
+    print(name, tensor.shape)
+```
+
+For a 600×800 input, the usual FPN grid hierarchy is approximately:
+
+```text
+P2 -> stride 4  -> 150 × 200
+P3 -> stride 8  -> 75 × 100
+P4 -> stride 16 -> 38 × 50
+P5 -> stride 32 -> 19 × 25
+```
+
+## 11. Inspect tensor statistics
+
+A useful helper is:
+
+```python
+def tensor_info(t):
+    return {
+        "shape": tuple(t.shape),
+        "dtype": str(t.dtype),
+        "min": float(t.min()),
+        "max": float(t.max()),
+        "mean": float(t.mean()),
+        "std": float(t.std()),
+        "elements": t.numel(),
+        "MB_fp32": t.numel() * 4 / (1024 ** 2),
+    }
+```
+
+For a tensor shaped `[1, 256, 64, 112]`:
+
+$$
+1\times256\times64\times112=1,835,008
+$$
+
+values, or approximately 7.34 MB at FP32.
+
+This is why activation memory becomes important when we have multiple cameras, pyramid levels, temporal history and other perception models.
+
+## 12. Visualize the feature pyramid
+
+```python
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 5))
+names = ["P2 (Stride 4)", "P3 (Stride 8)", "P4 (Stride 16)", "P5 (Stride 32)"]
+
+for ax, key, name in zip(axes, list(features.keys())[:4], names):
+    tensor = features[key]
+    heatmap = tensor[0].mean(dim=0).cpu().numpy()
+    ax.imshow(heatmap)
+    ax.set_title(f"{name}\n{heatmap.shape[0]}×{heatmap.shape[1]}")
+    ax.axis("off")
+
+plt.tight_layout()
+plt.show()
+```
+
+P5 may look blocky when enlarged. That is expected from its coarse feature grid.
+
+## 13. Feature stride and camera geometry
+
+A feature coordinate is not automatically an image coordinate. For a stride-8 feature map, a simplified mapping is:
+
+$$
+u_{image}\approx u_{feature}\times8$$
+
+Actual geometry must also account for resizing, padding, convolution conventions and camera calibration.
+
+This matters directly to the later camera-to-BEV transformation.
+
+## 14. From image features to BEV
+
+The camera encoder produces learned image-space features:
+
+```text
+RGB
+ |
+v
+ResNet-50
+ |
+ +--> C2 C3 C4 C5
+ |
+v
+FPN
+ |
+ +--> P2 P3 P4 P5
+ |
+v
+Multi-scale image features
+```
+
+A later stage incorporates camera geometry and view transformation:
+
+```text
+Camera
+  |
+  v
+Encoder
+  |
+  v
+FPN
+  |
+  v
+Image features
+  |
+  v
+Camera geometry / view transform
+  |
+  v
+BEV features
+  |
+  v
+Temporal BEV fusion
+```
+
+This is the conceptual handoff we will investigate next.
+
+## 15. What happens on the automotive SoC?
+
+The complete path can look like:
+
+```text
+Camera sensor
+     |
+     v
+ISP / calibration
+     |
+     v
+DMA / shared memory
+     |
+     v
+Preprocessing
+     |
+     v
+NPU / GPU
+     |
+     v
+ResNet-50 + FPN
+     |
+     v
+Feature buffers
+     |
+     v
+BEV transformation
+```
+
+We therefore need to understand not only the neural graph, but also buffer ownership, DMA, tensor layout, accelerator memory, compiler transformations, precision conversion, concurrent workloads, latency distribution and thermal behaviour.
+
+## 16. Layer fusion
+
+A compiler may be able to optimize compatible sequences such as:
+
+```text
+Conv
+  |
+BatchNorm
+  |
+ReLU
+```
+
+reducing intermediate memory traffic. Exact fusion depends on the graph, compiler and target accelerator, so deployed performance must be measured rather than inferred from the framework graph alone.
+
+## 17. Recommended experiment sequence
+
+### Experiment 1 — Raw ResNet-50
+
+Measure:
+
+```text
+parameters
+feature shapes
+latency
+activation memory
+```
+
+### Experiment 2 — ResNet-50 + FPN
+
+Trace:
+
+```text
+C2 C3 C4 C5
+     |
+     v
+FPN
+     |
+     v
+P2 P3 P4 P5
+```
+
+### Experiment 3 — Activation analysis
+
+Record min/max, mean/std, percentiles, zero percentage and memory footprint.
+
+### Experiment 4 — Compute analysis
+
+Compare FLOPs, parameters, activation memory, latency and throughput.
+
+### Experiment 5 — Precision
+
+Compare FP32, FP16 and INT8 for both numerical behaviour and performance.
+
+### Experiment 6 — Encoder comparison
+
+Only after understanding ResNet-50 should we compare ResNet-18, ResNet-101, ConvNeXt, Swin and MobileNet.
+
+## 18. The next level: open one bottleneck block
+
+The next experiment should trace one actual ResNet-50 bottleneck:
+
+```text
+Input tensor
+      |
+      v
+1×1 Conv
+      |
+      v
+BatchNorm
+      |
+      v
+ReLU
+      |
+      v
+3×3 Conv
+      |
+      v
+BatchNorm
+      |
+      v
+1×1 Conv
+      |
+      v
+BatchNorm
+      |
+      +<------ Skip connection
+      |
+      v
+     Add
+      |
+      v
+     ReLU
+```
+
+Then trace the same computation through:
+
+```text
+PyTorch tensor
+      ↓
+Convolution
+      ↓
+FP32 / FP16 / INT8
+      ↓
+Compiler graph
+      ↓
+Kernel
+      ↓
+GPU/NPU execution
+      ↓
+Memory traffic
+```
+
+That is where the camera encoder stops being a black box and becomes something we can understand from the algorithm all the way down to the silicon.
