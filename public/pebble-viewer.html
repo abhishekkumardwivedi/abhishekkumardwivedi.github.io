@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pebble V3-D Interactive Render</title>
+<style>
+  :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#0b1220; }
+  #app { position:relative; width:100%; height:100%; min-height:320px; background:
+      radial-gradient(circle at 50% 28%, rgba(96,165,250,.10), transparent 34%),
+      linear-gradient(180deg,#0b1220 0%,#111827 100%); }
+  canvas { width:100%; height:100%; display:block; }
+  .hud { position:absolute; inset:0; pointer-events:none; }
+  .title { position:absolute; left:18px; top:16px; pointer-events:none; }
+  .eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:#7dd3fc; font-weight:700; }
+  .name { margin-top:4px; color:#f8fafc; font-size:18px; font-weight:700; letter-spacing:-.02em; }
+  .meta { margin-top:3px; color:#94a3b8; font-size:11px; }
+  .toolbar { position:absolute; right:14px; top:14px; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; max-width:min(420px,70vw); pointer-events:auto; }
+  button { appearance:none; border:1px solid rgba(148,163,184,.28); background:rgba(15,23,42,.78); color:#e2e8f0; border-radius:8px; padding:7px 9px; font-size:11px; cursor:pointer; backdrop-filter:blur(10px); }
+  button:hover, button.active { background:rgba(37,99,235,.78); border-color:rgba(125,211,252,.7); color:#fff; }
+  .hint { position:absolute; left:16px; bottom:13px; padding:7px 10px; border:1px solid rgba(148,163,184,.18); border-radius:8px; background:rgba(15,23,42,.62); color:#94a3b8; font-size:11px; pointer-events:none; backdrop-filter:blur(8px); }
+  .badge { position:absolute; right:14px; bottom:13px; color:#64748b; font-size:10px; pointer-events:none; }
+  .loading { position:absolute; inset:0; display:grid; place-items:center; color:#cbd5e1; font-size:13px; letter-spacing:.02em; }
+  body.compact .title { top:12px; left:14px; }
+  body.compact .name { font-size:14px; }
+  body.compact .meta, body.compact .eyebrow, body.compact .badge { display:none; }
+  body.compact .toolbar { top:10px; right:10px; max-width:78vw; }
+  body.compact button { padding:6px 8px; }
+  @media (max-width:600px) {
+    .toolbar { top:auto; right:10px; left:10px; bottom:42px; max-width:none; justify-content:center; }
+    .title { left:12px; top:10px; }
+    .meta { display:none; }
+    .hint { left:50%; transform:translateX(-50%); white-space:nowrap; bottom:8px; }
+    .badge { display:none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="loading" class="loading">Loading Pebble engineering render…</div>
+  <div class="hud">
+    <div class="title">
+      <div class="eyebrow">Interactive engineering render</div>
+      <div class="name">Pebble V3-D</div>
+      <div class="meta">~165 × 150 mm body · 170 mm overall including antennae</div>
+    </div>
+    <div class="toolbar">
+      <button data-view="iso" class="active">ISO</button>
+      <button data-view="front">Front</button>
+      <button data-view="side">Side</button>
+      <button data-view="top">Top</button>
+      <button id="mechanism">Mechanism</button>
+      <button id="rotate">Auto rotate</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div class="hint">Drag to rotate · wheel/pinch to zoom</div>
+    <div class="badge">Procedural render from Pebble V3-D CAD dimensions</div>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.180.0';
+import { OrbitControls } from 'https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+
+const params = new URLSearchParams(location.search);
+if (params.get('compact') === '1') document.body.classList.add('compact');
+
+const app = document.getElementById('app');
+const loading = document.getElementById('loading');
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x0b1220, 390, 650);
+
+const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+app.prepend(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.065;
+controls.minDistance = 220;
+controls.maxDistance = 620;
+controls.target.set(0, 78, 2);
+
+scene.add(new THREE.HemisphereLight(0xcbd5e1, 0x172033, 1.25));
+const key = new THREE.DirectionalLight(0xfff3dd, 3.1);
+key.position.set(170, 300, 280); key.castShadow = true;
+key.shadow.mapSize.set(2048,2048); key.shadow.camera.left=-260; key.shadow.camera.right=260; key.shadow.camera.top=260; key.shadow.camera.bottom=-260;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x60a5fa, 1.35); rim.position.set(-220,180,-190); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffffff, .72); fill.position.set(-100,110,220); scene.add(fill);
+
+const shellMat = new THREE.MeshPhysicalMaterial({ color:0xeee7d8, roughness:.34, metalness:0.02, clearcoat:.23, clearcoatRoughness:.28 });
+const visorMat = new THREE.MeshPhysicalMaterial({ color:0x080b11, roughness:.12, metalness:.02, clearcoat:1, clearcoatRoughness:.08 });
+const eyeMat = new THREE.MeshStandardMaterial({ color:0x6bdcff, emissive:0x169ed1, emissiveIntensity:3.0, roughness:.24 });
+const footMat = new THREE.MeshPhysicalMaterial({ color:0xd8d2c8, roughness:.42, clearcoat:.18 });
+const antennaMat = new THREE.MeshStandardMaterial({ color:0x17191d, roughness:.35, metalness:.25 });
+const tipMat = new THREE.MeshStandardMaterial({ color:0xffbe57, emissive:0xff8a1f, emissiveIntensity:2.2, roughness:.24 });
+const linkMat = new THREE.MeshStandardMaterial({ color:0xa0a5ac, metalness:.62, roughness:.32 });
+const jointMat = new THREE.MeshStandardMaterial({ color:0x454b53, metalness:.45, roughness:.29 });
+const motorMat = new THREE.MeshStandardMaterial({ color:0x6b737c, metalness:.55, roughness:.36 });
+
+const BODY = [
+  [8,46,44.5,52.5,2.03],[15,56,54,62.5,2.02],[28,66.5,64.5,73.5,2.01],[45,73,71,81,2.0],
+  [61,75,74,82.5,2.0],[77,73.5,72.5,80.5,2.0],[92,68.5,67.5,74,2.0],[106,61,60,65.5,2.0],
+  [119,51,50,54,2.0],[129,37.5,36.5,40,2.0],[136,15.5,14.5,18,2.0],[138,3,3,4,2.0]
+];
+const toThree = ([x,y,z]) => new THREE.Vector3(y,z,x);
+function bodyFront(z) {
+  if (z <= BODY[0][0]) return BODY[0][1];
+  if (z >= BODY[BODY.length-1][0]) return BODY[BODY.length-1][1];
+  for (let i=0;i<BODY.length-1;i++) {
+    const a=BODY[i], b=BODY[i+1];
+    if (z>=a[0] && z<=b[0]) { const t=(z-a[0])/(b[0]-a[0]); return THREE.MathUtils.lerp(a[1],b[1],t); }
+  }
+  return 70;
+}
+function loftSuperellipse(sections, segments=72) {
+  const positions=[]; const indices=[];
+  for (const [z,front,back,halfY,exp] of sections) {
+    const p=2/exp;
+    for(let i=0;i<segments;i++) {
+      const t=2*Math.PI*i/segments, c=Math.cos(t), s=Math.sin(t);
+      const ax=c>=0?front:back;
+      const x=Math.abs(c)<1e-10?0:ax*Math.sign(c)*Math.pow(Math.abs(c),p);
+      const y=Math.abs(s)<1e-10?0:halfY*Math.sign(s)*Math.pow(Math.abs(s),p);
+      const v=toThree([x,y,z]); positions.push(v.x,v.y,v.z);
+    }
+  }
+  const rings=sections.length;
+  for(let r=0;r<rings-1;r++) for(let i=0;i<segments;i++) {
+    const n=(i+1)%segments, a=r*segments+i,b=r*segments+n,c=(r+1)*segments+n,d=(r+1)*segments+i;
+    indices.push(a,b,d,b,c,d);
+  }
+  const bottomIndex=positions.length/3; let bv=toThree([0,0,sections[0][0]]); positions.push(bv.x,bv.y,bv.z);
+  const topIndex=positions.length/3; let tv=toThree([0,0,sections[rings-1][0]]); positions.push(tv.x,tv.y,tv.z);
+  for(let i=0;i<segments;i++) { const n=(i+1)%segments; indices.push(bottomIndex,n,i); const a=(rings-1)*segments+i,b=(rings-1)*segments+n; indices.push(topIndex,a,b); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3)); g.setIndex(indices); g.computeVertexNormals(); return g;
+}
+const exterior = new THREE.Group(); scene.add(exterior);
+const body = new THREE.Mesh(loftSuperellipse(BODY), shellMat); body.castShadow=true; body.receiveShadow=true; exterior.add(body);
+
+const visorYZ = [
+[0,37],[16.96,35.89],[30.21,31.82],[40.28,24.42],[46.64,14.8],[50.35,3.7],[52.47,-5.92],[53,-12.95],[50.88,-20.35],[44.52,-27.01],[32.86,-31.82],[18.02,-34.04],[0,-32.56],[-18.02,-34.04],[-32.86,-31.82],[-44.52,-27.01],[-50.88,-20.35],[-53,-12.95],[-52.47,-5.92],[-50.35,3.7],[-46.64,14.8],[-40.28,24.42],[-30.21,31.82],[-16.96,35.89]
+].map(([y,dz])=>[y,97+dz]);
+const contour2=visorYZ.map(([y,z])=>new THREE.Vector2(y,z));
+const tris=THREE.ShapeUtils.triangulateShape(contour2,[]); const vp=[]; const vi=[];
+for(const [y,z] of visorYZ){ const v=toThree([bodyFront(z)+0.65,y,z]); vp.push(v.x,v.y,v.z); }
+for(const t of tris) vi.push(...t);
+const vg=new THREE.BufferGeometry(); vg.setAttribute('position',new THREE.Float32BufferAttribute(vp,3)); vg.setIndex(vi); vg.computeVertexNormals();
+const visor=new THREE.Mesh(vg,visorMat); visor.renderOrder=2; exterior.add(visor);
+
+function addEye(yCad,zCad,scale=1){
+  const geom=new THREE.SphereGeometry(1,32,16); const m=new THREE.Mesh(geom,eyeMat); const xCad=bodyFront(zCad)+1.4;
+  const p=toThree([xCad,yCad,zCad]); m.position.copy(p); m.scale.set(10.5*scale,4.2*scale,1.5); m.castShadow=false; exterior.add(m);
+}
+addEye(21,103); addEye(-21,103);
+
+function loftFoot(cx,cy,scale){
+  const inwardY=-Math.sign(cy)*2.6, inwardX=-Math.sign(cx||1)*1.4;
+  const sec=[[0,7.5,6.2,0,0],[1.8,10.8,8.6,0,0],[5.5,13,10.5,0,0],[10.5,12.4,9.7,.3*inwardX,.3*inwardY],[14.3,9.5,7.1,.68*inwardX,.68*inwardY],[17.2,3.2,2.5,inwardX,inwardY]];
+  const seg=40,pos=[],idx=[];
+  for(const [z,rx,ry,dx,dy] of sec){ for(let i=0;i<seg;i++){const a=2*Math.PI*i/seg; const v=toThree([cx+dx+(rx*scale)*Math.cos(a),cy+dy+(ry*scale)*Math.sin(a),z]); pos.push(v.x,v.y,v.z);} }
+  for(let r=0;r<sec.length-1;r++) for(let i=0;i<seg;i++){const n=(i+1)%seg,a=r*seg+i,b=r*seg+n,c=(r+1)*seg+n,d=(r+1)*seg+i; idx.push(a,b,d,b,c,d);} 
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+const CRANK_R=4, FRAME_D=17, COUPLER_L=34, ROCKER_Q=22, FOOT_EXT=8, LEG_ROOT_Z=35.5, FRONT_A_X=18, LEG_Y=44, NEUTRAL=134;
+function fourbar(front,left){
+  const th=THREE.MathUtils.degToRad(NEUTRAL); const A2=[0,0],D2=[FRAME_D,0],B2=[CRANK_R*Math.cos(th),CRANK_R*Math.sin(th)];
+  const vx=D2[0]-B2[0],vy=-B2[1],dist=Math.hypot(vx,vy); const a=(COUPLER_L**2-ROCKER_Q**2+dist**2)/(2*dist); const h=Math.sqrt(Math.max(0,COUPLER_L**2-a*a));
+  const p0=[B2[0]+a*vx/dist,B2[1]+a*vy/dist], perp=[-vy/dist,vx/dist]; const C2=[p0[0]-h*perp[0],p0[1]-h*perp[1]];
+  const ux=(C2[0]-D2[0])/ROCKER_Q,uy=C2[1]/ROCKER_Q,P2=[C2[0]+FOOT_EXT*ux,C2[1]+FOOT_EXT*uy];
+  const xs=front?1:-1,y=left?LEG_Y:-LEG_Y,ax=xs*FRONT_A_X; const map=q=>[ax+xs*q[0],y,LEG_ROOT_Z+q[1]];
+  return {A:map(A2),B:map(B2),C:map(C2),D:map(D2),P:map(P2)};
+}
+const mechanismGroup=new THREE.Group(); mechanismGroup.visible=false; scene.add(mechanismGroup);
+function cylBetween(aCad,bCad,r,mat,parent){ const a=toThree(aCad),b=toThree(bCad),dir=new THREE.Vector3().subVectors(b,a),len=dir.length(); const g=new THREE.CylinderGeometry(r,r,len,18); const m=new THREE.Mesh(g,mat); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().normalize()); m.castShadow=true; parent.add(m); return m; }
+for(const front of [true,false]) for(const left of [true,false]){
+  const leg=fourbar(front,left);
+  const foot=new THREE.Mesh(loftFoot(leg.P[0],leg.P[1],front?.92:.84),footMat); foot.castShadow=true; foot.receiveShadow=true; exterior.add(foot);
+  cylBetween(leg.A,leg.B,2.2,linkMat,mechanismGroup); cylBetween(leg.B,leg.C,2.2,linkMat,mechanismGroup); cylBetween(leg.D,leg.C,2.2,linkMat,mechanismGroup); cylBetween(leg.C,leg.P,2.2,linkMat,mechanismGroup);
+  for(const p of [leg.A,leg.B,leg.C,leg.D]){const s=new THREE.Mesh(new THREE.SphereGeometry(3,20,12),jointMat);s.position.copy(toThree(p));mechanismGroup.add(s);} 
+  const motor=new THREE.Mesh(new THREE.BoxGeometry(30,12,25),motorMat); const motorCenterY=leg.A[1]-Math.sign(leg.A[1])*15; motor.position.copy(toThree([leg.A[0],motorCenterY,leg.A[2]])); motor.castShadow=true; mechanismGroup.add(motor);
+}
+
+function addAntenna(sign){ const pts=[[0,sign*20,132.5],[.1,sign*21.5,139.5],[.6,sign*25.5,148],[1.4,sign*30.5,155.5],[2.4,sign*36.5,162.5],[3,sign*39,164]]; for(let i=0;i<pts.length-1;i++) cylBetween(pts[i],pts[i+1],1.65,antennaMat,exterior); const tip=new THREE.Mesh(new THREE.SphereGeometry(6,28,18),tipMat); tip.position.copy(toThree(pts.at(-1))); tip.castShadow=true; exterior.add(tip); }
+addAntenna(1); addAntenna(-1);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(700,700), new THREE.MeshStandardMaterial({color:0x121b2a,roughness:.95,metalness:0}));
+floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+const grid = new THREE.GridHelper(700,35,0x3b82f6,0x334155); grid.material.opacity=.28; grid.material.transparent=true; grid.position.y=.25; scene.add(grid);
+
+function setView(name){
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  if(name==='front') camera.position.set(0,88,370);
+  else if(name==='side') camera.position.set(370,88,0);
+  else if(name==='top') camera.position.set(0,430,8);
+  else camera.position.set(235,165,315);
+  controls.target.set(0,78,4); controls.update();
+}
+setView('iso');
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+let auto=false; const rotateBtn=document.getElementById('rotate'); rotateBtn.addEventListener('click',()=>{auto=!auto;rotateBtn.classList.toggle('active',auto);});
+const mechBtn=document.getElementById('mechanism'); mechBtn.addEventListener('click',()=>{mechanismGroup.visible=!mechanismGroup.visible;mechBtn.classList.toggle('active',mechanismGroup.visible); shellMat.transparent=mechanismGroup.visible; shellMat.opacity=mechanismGroup.visible?.34:1; visorMat.transparent=mechanismGroup.visible; visorMat.opacity=mechanismGroup.visible?.56:1;});
+document.getElementById('reset').addEventListener('click',()=>{auto=false;rotateBtn.classList.remove('active'); mechanismGroup.visible=false;mechBtn.classList.remove('active');shellMat.opacity=1;shellMat.transparent=false;visorMat.opacity=1;visorMat.transparent=false;setView('iso');});
+
+function resize(){ const w=app.clientWidth,h=app.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(app); resize();
+loading.remove();
+const clock=new THREE.Clock();
+function animate(){ requestAnimationFrame(animate); const dt=clock.getDelta(); if(auto) exterior.rotation.y+=dt*.34; mechanismGroup.rotation.y=exterior.rotation.y; controls.update(); renderer.render(scene,camera); }
+animate();
+</script>
+</body>
+</html>
