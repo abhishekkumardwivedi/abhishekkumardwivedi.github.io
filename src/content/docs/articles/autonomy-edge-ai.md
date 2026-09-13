@@ -3,7 +3,14 @@ title: Autonomy & Edge AI
 description: A guided library covering model foundations, sensor intelligence, perception, fusion, world models, and deployment.
 ---
 
-This section follows the path from mathematical building blocks to deployable intelligence for physical systems. The articles are intentionally generic: they explain reusable engineering principles without revealing a specific product implementation.
+This section follows the path from mathematical building blocks to deployable intelligence for physical systems. The conceptual articles explain reusable engineering principles, while the nuScenes series provides a stage-by-stage hands-on implementation path.
+
+## Hands-on nuScenes build
+
+1. [nuScenes Autonomy Pipeline: From Raw Sensors to World Model](/articles/nuscenes-autonomy-pipeline/) — the living roadmap from WebRTC and raw sensor contracts through BEV fusion, temporal perception, prediction and planning inputs.
+2. [Stage 2: Multi-Sensor Playback and Time Synchronization](/articles/nuscenes-pipeline-stage2/) — six recorded cameras, LiDAR/radar geometric BEV, per-sensor timing offsets, ego-frame transforms, RunPod and WebRTC, with no AI inference yet.
+
+As each new stage is implemented, the pipeline index and this section will be updated so the written architecture stays aligned with the working code.
 
 ## 1. Foundations
 
