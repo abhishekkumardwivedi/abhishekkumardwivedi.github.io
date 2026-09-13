@@ -34,6 +34,7 @@ From there, explore sensor-specific encoders, move into spatial–temporal model
 
 ### Embedded & Automotive
 
+- **Qualcomm automotive SoC series:** [Compute Map](/articles/qualcomm-soc-compute-map/), [DSP Domains](/articles/qualcomm-dsp-domains/), [TrustZone & TEE](/articles/qualcomm-trustzone-tee/), [Hexagon NPU / HTP](/articles/qualcomm-npu-htp/), [Camera ISP](/articles/qualcomm-camera-isp/), [Display Processing / DPU](/articles/qualcomm-display-dpu/), and [DMA, SMMU & Data Movement](/articles/qualcomm-dma-smmu/)
 - **Vehicle control:** [AURIX for Vehicle Control: Building a Deterministic Safety Island](/articles/aurix-vehicle-control/)
 
 ### Safety & Assurance

@@ -91,6 +91,13 @@ export default defineConfig({
               label: 'Embedded & Automotive',
               items: [
                 { label: 'Section Overview', slug: 'articles/embedded-automotive' },
+                { label: 'Qualcomm SoC Compute Map', slug: 'articles/qualcomm-soc-compute-map' },
+                { label: 'Qualcomm DSP Domains', slug: 'articles/qualcomm-dsp-domains' },
+                { label: 'TrustZone & the TEE', slug: 'articles/qualcomm-trustzone-tee' },
+                { label: 'Hexagon NPU / HTP', slug: 'articles/qualcomm-npu-htp' },
+                { label: 'Camera ISP Pipeline', slug: 'articles/qualcomm-camera-isp' },
+                { label: 'Display Processing / DPU', slug: 'articles/qualcomm-display-dpu' },
+                { label: 'DMA, SMMU & Data Movement', slug: 'articles/qualcomm-dma-smmu' },
                 { label: 'AURIX Vehicle Control', slug: 'articles/aurix-vehicle-control' }
               ]
             },
