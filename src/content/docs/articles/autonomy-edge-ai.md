@@ -3,14 +3,15 @@ title: Autonomy & Edge AI
 description: A guided library covering model foundations, sensor intelligence, perception, fusion, world models, and deployment.
 ---
 
-This section follows the path from mathematical building blocks to deployable intelligence for physical systems. The conceptual articles explain reusable engineering principles, while the nuScenes series provides a stage-by-stage hands-on implementation path.
+This section follows the path from mathematical building blocks to deployable intelligence for physical systems. The conceptual articles explain reusable engineering principles, while the nuScenes series develops an autonomy architecture stage by stage so each representation boundary is clear before the next one is introduced.
 
-## Hands-on nuScenes build
+## Staged autonomy build
 
-1. [nuScenes Autonomy Pipeline: From Raw Sensors to World Model](/articles/nuscenes-autonomy-pipeline/) — the living roadmap from WebRTC and raw sensor contracts through BEV fusion, temporal perception, prediction and planning inputs.
-2. [Stage 2: Multi-Sensor Playback and Time Synchronization](/articles/nuscenes-pipeline-stage2/) — six recorded cameras, LiDAR/radar geometric BEV, per-sensor timing offsets, ego-frame transforms, RunPod and WebRTC, with no AI inference yet.
+1. [nuScenes Autonomy Pipeline: From Raw Sensors to World Model](/articles/nuscenes-autonomy-pipeline/) — the living architecture from sensor/time/geometry contracts through learned encoders, BEV fusion, temporal perception, prediction and planner-facing world state.
+2. [Stage 2: Multi-Sensor Playback and Time Synchronization](/articles/nuscenes-pipeline-stage2/) — sensor identity, asynchronous capture time, calibration, ego-frame transforms, LiDAR/radar geometry and the measurement contract before learned inference.
+3. [Stage 3: From RGB Pixels to Learned Camera Features](/articles/nuscenes-pipeline-stage3/) — preprocessing, shared ResNet-50 encoding, tensor shapes, feature semantics, timing lineage, memory/latency, feature inspection and the handoff to camera-to-BEV.
 
-As each new stage is implemented, the pipeline index and this section will be updated so the written architecture stays aligned with the working code.
+As each stage is added, the pipeline index is updated so the written architecture remains aligned with the representation contracts being built.
 
 ## 1. Foundations
 
