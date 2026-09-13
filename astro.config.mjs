@@ -66,6 +66,7 @@ export default defineConfig({
                 { label: 'nuScenes Autonomy Pipeline', slug: 'articles/nuscenes-autonomy-pipeline' },
                 { label: 'Stage 2: Sensor Playback & Sync', slug: 'articles/nuscenes-pipeline-stage2' },
                 { label: 'Stage 3: Camera Feature Encoding', slug: 'articles/nuscenes-pipeline-stage3' },
+                { label: 'Stage 4: Camera Spatial BEV', slug: 'articles/nuscenes-pipeline-stage4' },
                 { label: 'Math Behind Modern AI', slug: 'articles/math-behind-modern-ai' },
                 { label: 'Anatomy of a Perception Model', slug: 'articles/anatomy-of-a-perception-model' },
                 { label: 'Sensor Measurement to Vehicle Motion', slug: 'articles/camera-to-driving-decision' },
