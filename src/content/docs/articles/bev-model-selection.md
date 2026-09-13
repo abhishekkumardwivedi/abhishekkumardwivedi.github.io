@@ -1,6 +1,6 @@
 ---
 title: BEV Model Selection
-description: An expert treatment of bird's-eye-view construction: coordinate contracts, depth lifting, query projection, voxel fusion, discretization, visibility, uncertainty and runtime cost.
+description: "An expert treatment of bird's-eye-view construction: coordinate contracts, depth lifting, query projection, voxel fusion, discretization, visibility, uncertainty and runtime cost."
 sidebar:
   order: 11
 ---
