@@ -1,0 +1,85 @@
+name: Repair content frontmatter
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-content-frontmatter.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Quote top-level title and description scalars
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          root = Path('src/content/docs')
+          field = re.compile(r'^(title|description):\s*(.*)$')
+          changed = []
+
+          for path in sorted(root.rglob('*')):
+              if path.suffix not in {'.md', '.mdx'}:
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if not text.startswith('---\n'):
+                  continue
+              end = text.find('\n---\n', 4)
+              if end < 0:
+                  continue
+
+              front = text[4:end]
+              lines = front.splitlines()
+              touched = False
+              for i, line in enumerate(lines):
+                  m = field.match(line)
+                  if not m:
+                      continue
+                  key, value = m.group(1), m.group(2).strip()
+                  if not value:
+                      continue
+                  if value[0] in {'"', "'", '|', '>', '[', '{'}:
+                      continue
+                  lines[i] = f'{key}: {json.dumps(value, ensure_ascii=False)}'
+                  touched = True
+
+              if touched:
+                  new_front = '\n'.join(lines)
+                  new_text = '---\n' + new_front + text[end:]
+                  path.write_text(new_text, encoding='utf-8')
+                  changed.append(str(path))
+
+          print(f'Updated {len(changed)} content files')
+          for path in changed:
+              print(path)
+          PY
+
+      - name: Verify site build
+        shell: bash
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit repaired frontmatter
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No frontmatter changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/content/docs
+          git commit -m 'Normalize content frontmatter for Pages build'
+          git push origin HEAD:main
