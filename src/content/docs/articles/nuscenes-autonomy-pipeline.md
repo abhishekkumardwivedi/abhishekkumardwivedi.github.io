@@ -1,123 +1,227 @@
 ---
 title: "nuScenes Autonomy Pipeline: From Raw Sensors to World Model"
-description: "A hands-on staged autonomy build on RunPod, starting with WebRTC and synchronized nuScenes sensors and progressing toward BEV fusion, temporal perception, prediction and world-model inputs."
+description: "A staged technical path through autonomy: sensor contracts, learned encoders, BEV, multi-sensor fusion, temporal perception, scene understanding, prediction and world-state construction."
 ---
 
-This series builds an autonomy pipeline incrementally using nuScenes and RunPod. The rule is simple: **each stage must have one clear learning objective, one inspectable output, and one verification method before the next layer is added**.
+Building an autonomy stack becomes much easier to reason about when it is decomposed into explicit representation contracts. Rather than jumping directly from camera images to bounding boxes or steering commands, this series develops the pipeline one layer at a time and asks a precise question at every stage:
 
-The implementation repository is [`abhishekkumardwivedi/nusenses_autonomy_pipeline`](https://github.com/abhishekkumardwivedi/nusenses_autonomy_pipeline). The browser visualization is streamed from the remote RunPod machine over WebRTC so GPU processing can remain remote while the experiment stays easy to inspect from a normal PC.
+> **What information do we have now, what representation is it in, what assumptions does the next stage require, and how can we verify the handoff?**
+
+nuScenes is used as a concrete multimodal data source because it provides cameras, LiDAR, radar, calibration, ego poses, timestamps, maps and annotations. The principles are broader than the dataset itself and apply to real vehicle perception architectures.
+
+The accompanying implementation is available in [`abhishekkumardwivedi/nusenses_autonomy_pipeline`](https://github.com/abhishekkumardwivedi/nusenses_autonomy_pipeline), but the articles focus on the **technical architecture of autonomy**, not on a particular compute host or visualization tool.
 
 ## Pipeline roadmap
 
-| Stage | Purpose | Main output | Status |
+| Stage | Technical question | Main representation | Status |
 |---|---|---|---|
-| 1 | Establish remote real-time visualization | Synthetic in-memory WebRTC stream | Complete |
-| 2 | Establish sensor/time/geometry truth | 6 cameras + LiDAR/radar geometric BEV + timing | **Complete** |
-| 3 | Begin learned perception | Camera encoder feature tensors and feature inspection | Next |
-| 4 | Lift camera features into space | Camera-to-BEV representation | Planned |
-| 5 | Encode point/range sensors | LiDAR and radar learned features | Planned |
-| 6 | Fuse modalities | Multi-sensor BEV | Planned |
-| 7 | Add time | Ego-motion-aligned temporal BEV memory | Planned |
-| 8 | Interpret the scene | 3D detection, semantics/occupancy and tracking | Planned |
-| 9 | Predict motion | Agent trajectory prediction and uncertainty | Planned |
-| 10 | Build the local world state | Objects + occupancy + map + ego + temporal memory | Planned |
-| 11 | Produce planning inputs | Candidate trajectories, risk and collision context | Planned |
+| 1 | How do we inspect a live perception pipeline? | Real-time visualization transport | Complete |
+| 2 | Which measurement came from which sensor, at what time and in which frame? | Sensor/time/geometry contract | **Complete** |
+| 3 | How do RGB pixels become learned visual features? | `[B,N,C,Hf,Wf]` camera feature tensor | **Article available / implementation next** |
+| 4 | How do perspective camera features become metric vehicle-centric space? | Camera-derived BEV | Planned |
+| 5 | How should LiDAR and radar be encoded for learning? | Learned point/range features | Planned |
+| 6 | How do heterogeneous modalities become one spatial representation? | Multi-sensor BEV | Planned |
+| 7 | How is motion and history represented? | Ego-motion-aligned temporal BEV | Planned |
+| 8 | How is the scene interpreted? | Objects, occupancy, semantics and tracks | Planned |
+| 9 | How are future motions represented? | Trajectories and uncertainty | Planned |
+| 10 | What is the local machine-readable world state? | Dynamic world representation | Planned |
+| 11 | What does planning actually need from perception? | Candidate trajectories, risk and collision context | Planned |
 
-The exact stage boundaries may evolve as experiments expose better decompositions. This page will be updated as the implementation advances.
+The exact boundaries may evolve, but the ordering reflects an important architectural dependency: **time and geometry must be trustworthy before learned spatial fusion can be trustworthy.**
 
-## Stage 1 — streaming substrate
+## Stage 1 — observability before autonomy
 
-Before using nuScenes, the first milestone was intentionally trivial: generate a moving synthetic frame in Python, turn it into an `av.VideoFrame`, stream it using `aiortc`, and verify smooth reception through the RunPod port-8080 proxy path.
+The first stage establishes a way to observe a changing pipeline continuously rather than inspecting disconnected output images. This is intentionally infrastructure-light from an autonomy perspective: its purpose is to make later stages inspectable without mixing visualization failures with perception failures.
 
-The point was not graphics. It separated **transport problems** from **autonomy problems**. Once WebRTC worked reliably, every later stage could keep the same browser path.
+The conceptual lesson is that observability should be designed into the system from the beginning. Sensor timestamps, tensor shapes, frame identities, latency and intermediate representations become far easier to debug when they can be inspected as the scene advances.
 
-```text
-Python frame generator
-    -> MediaStreamTrack.recv()
-    -> av.VideoFrame
-    -> WebRTC
-    -> PC browser
-```
+## Stage 2 — sensor, time and geometry truth
 
-## Stage 2 — sensor playback, synchronization and geometry
-
-Stage 2 replaces the synthetic generator with real recorded nuScenes sensor records while deliberately adding **no AI**.
-
-The current flow is:
+Stage 2 contains no neural inference. It establishes the physical measurement contract.
 
 ```mermaid
 flowchart LR
-    A["nuScenes scene/sample"] --> B["6 camera records"]
-    A --> C["LIDAR_TOP"]
-    A --> D["5 radar channels"]
-    A --> E["timestamps + calibration + ego pose"]
-    C --> F["ego-frame transform"]
-    D --> F
-    B --> G["composite renderer"]
-    F --> G
-    E --> G
-    G --> H["WebRTC browser playback"]
+    A["multimodal sample"] --> B["camera records"]
+    A --> C["LiDAR record"]
+    A --> D["radar records"]
+    A --> E["timestamps"]
+    A --> F["calibration"]
+    A --> G["ego poses"]
+    C --> H["common ego frame"]
+    D --> H
+    F --> H
+    G --> H
+    B --> I["time-linked camera observations"]
+    E --> I
 ```
 
 The detailed article is [Stage 2: Multi-Sensor Playback and Time Synchronization](/articles/nuscenes-pipeline-stage2/).
 
-Stage 2 establishes several contracts that later AI stages depend on:
-
-- sample-linked sensor identity rather than folder scanning;
-- per-sensor capture timestamps and visible `dt`;
-- calibrated extrinsics;
-- capture-time ego pose;
-- a defined reference ego frame;
-- deterministic geometric transforms;
-- the distinction between dataset sample rate and WebRTC refresh rate;
-- verification that camera/LiDAR/radar all advance as one scene timeline.
-
-## Why the AI starts only at Stage 3
-
-A neural network can produce convincing output even when its inputs are subtly wrong. For multi-sensor autonomy, bugs in timestamp association, extrinsics, handedness, axes, units, or ego-motion compensation are especially dangerous because they may look like model-quality problems.
-
-For that reason, the pipeline is layered as:
+The important output is not the visualization itself. It is the set of contracts later perception depends on:
 
 ```text
-transport
-  -> data linkage
-  -> time
-  -> geometry
-  -> learned representation
-  -> spatial fusion
-  -> temporal fusion
-  -> scene understanding
-  -> prediction
-  -> world state
-  -> planning inputs
+sensor identity
+capture timestamp
+reference timestamp / dt
+calibrated intrinsics
+calibrated extrinsics
+capture-time ego pose
+coordinate convention
+sample association
 ```
 
-Stage 3 is therefore the first learned stage, not the first useful stage.
+A neural network can often produce visually plausible results even when one of these is wrong. That is why the series treats them as a separate stage.
 
-## Stage 3 — camera encoding
+## Stage 3 — learned camera representation
 
-The next milestone will take the six synchronized RGB views and pass them through a shared camera encoder. The first objective is not detection; it is to understand the tensor contract:
+Stage 3 is the first learned stage. Six RGB observations are converted into feature tensors using a shared camera backbone.
+
+```mermaid
+flowchart LR
+    A["6 RGB cameras"] --> B["resize + normalize"]
+    B --> C["shared ResNet-50"]
+    C --> D["C5 features"]
+    D --> E["1x1 channel projection"]
+    E --> F["[B,N,256,8,14]"]
+    F --> G["Stage 4: camera-to-BEV"]
+```
+
+The detailed article is [Stage 3: From RGB Pixels to Learned Camera Features](/articles/nuscenes-pipeline-stage3/).
+
+The essential lesson is that a camera encoder **does not yet produce objects or BEV**. It changes representation:
 
 ```text
-6 RGB images
-    -> resize / normalize
-    -> camera backbone
-    -> multi-scale feature tensors
-    -> feature visualization and profiling
+pixel-space RGB
+    -> learned image-space feature vectors
 ```
 
-The Stage 3 article will document input shape, preprocessing, backbone choice, intermediate feature sizes, GPU/VRAM behaviour, and how the learned features remain associated with the Stage 2 sensor metadata.
+For a 256×448 input and a stride-32 ResNet-50 C5 output, each camera becomes an 8×14 grid of learned descriptors. A 1×1 projection reduces the 2048 backbone channels to a 256-channel interface suitable for later spatial processing.
 
-## Later stages
+Crucially, the tensor must retain its physical lineage:
 
-Camera-to-BEV comes after the camera feature contract is understood. Learned radar and LiDAR encoders follow, then multi-sensor fusion. Temporal BEV adds memory and ego-motion alignment; detection, tracking, semantic occupancy and prediction build scene understanding; finally those outputs can be organized into a local dynamic world representation suitable for planner inputs.
+```text
+feature tensor
++ camera identity
++ capture timestamp
++ dt
++ resized intrinsics
++ extrinsics
++ preprocessing transform
+```
 
-nuScenes is very strong for perception, fusion, tracking, maps and prediction experiments, but it is recorded data rather than a closed-loop simulator. Closed-loop planning/control will therefore eventually require a simulator such as CARLA or a physical test platform. That later transition should preserve the same contracts for timestamps, calibration, ego state and model inputs established here.
+The camera batch is a compute structure, not proof that the images were captured simultaneously.
+
+## Stage 4 — perspective features to metric BEV
+
+The next representation change is more profound. Stage 3 features still live on the camera image plane. A feature cell can be identified by `(u,v)`, but not yet by vehicle-centric metric coordinates such as `(x,y)` in metres.
+
+Stage 4 will therefore introduce the camera model:
+
+$$
+P_{camera}=dK^{-1}p
+$$
+
+followed by the camera-to-ego transform:
+
+$$
+P_{ego}=T_{ego\leftarrow camera}P_{camera}
+$$
+
+The central challenge is depth: monocular image features define rays, not unique 3D points. Different BEV architectures solve this with explicit depth distributions, geometric lifting, learned queries, deformable attention or hybrid approaches.
+
+## Stages 5–6 — learned point/range sensors and fusion
+
+LiDAR and radar should not simply be appended as more channels to an image tensor. Their native sampling structures are different:
+
+```text
+Camera -> dense perspective raster
+LiDAR  -> sparse 3D point set
+Radar  -> sparse range / Doppler measurements
+```
+
+Each modality needs an encoder appropriate to its measurement physics. Stage 6 then fuses the representations in a common spatial frame, where correspondence becomes much more meaningful.
+
+## Stage 7 — time becomes a first-class representation
+
+A single-frame BEV is still an instantaneous estimate. Driving requires memory.
+
+Temporal perception must distinguish:
+
+```text
+ego motion
+object motion
+measurement latency
+occlusion
+appearance / disappearance
+persistent static structure
+```
+
+Historical BEVs therefore need ego-motion alignment before temporal fusion. The system must also avoid treating stale information as current simply because it remains in memory.
+
+## Stage 8 — scene interpretation
+
+Only after spatial and temporal representations are stable do higher-level tasks become easy to place architecturally:
+
+```text
+3D detection
+semantic occupancy
+free space
+multi-object tracking
+traffic-control understanding
+```
+
+These are different readouts of a richer shared scene representation rather than isolated tricks applied directly to raw sensors.
+
+## Stage 9 — prediction
+
+Tracking estimates what agents are doing now. Prediction estimates what they may do next.
+
+The output should not be thought of as one deterministic future. Useful autonomy prediction represents multimodality and uncertainty: an agent approaching a junction may continue, turn, yield or stop.
+
+## Stage 10 — local world state
+
+A world representation organizes perception and prediction into a machine-readable state suitable for planning:
+
+```text
+static map context
++ dynamic agents
++ occupancy / free space
++ ego state
++ traffic controls
++ history
++ predicted futures
++ uncertainty
+```
+
+Whether this is called a world model depends on how much dynamics are learned. The architectural point is that planning needs a coherent state, not a collection of unrelated detector outputs.
+
+## Stage 11 — planner-facing contract
+
+The perception stack eventually has to answer planning questions:
+
+```text
+Where can I drive?
+What occupies that space?
+What is moving toward it?
+What may happen next?
+How uncertain is that estimate?
+Which candidate trajectory is safe and feasible?
+```
+
+This is where the entire staged construction becomes useful. A planner-facing interface is only as trustworthy as the sensor, time, geometry, representation and uncertainty contracts beneath it.
 
 ## Series articles
 
-1. **Stage 1 — WebRTC transport baseline:** implementation is currently documented in the repository under `webrtc_test/`; a dedicated article can be added as the series is expanded.
+1. **Stage 1 — Observability / live transport:** implementation baseline.
 2. [**Stage 2 — Multi-Sensor Playback and Time Synchronization**](/articles/nuscenes-pipeline-stage2/)
-3. **Stage 3 — Camera Encoder and Feature Inspection:** next.
+3. [**Stage 3 — From RGB Pixels to Learned Camera Features**](/articles/nuscenes-pipeline-stage3/)
+4. **Stage 4 — Camera Features to BEV:** planned.
+5. **Stage 5 — Learned LiDAR and Radar Encoding:** planned.
+6. **Stage 6 — Multi-Sensor BEV Fusion:** planned.
+7. **Stage 7 — Temporal BEV:** planned.
+8. **Stage 8 — Detection, Occupancy and Tracking:** planned.
+9. **Stage 9 — Prediction:** planned.
+10. **Stage 10 — Dynamic World State:** planned.
+11. **Stage 11 — Planner Inputs:** planned.
 
-This page is the living index. As each stage is implemented, its status, interfaces and article link will be updated here rather than allowing the experimental code and the written architecture to drift apart.
+This page remains the architectural index. Each detailed stage article should make one representation boundary conceptually clear before the next one is introduced.
