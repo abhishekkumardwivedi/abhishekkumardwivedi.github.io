@@ -1,5 +1,5 @@
 ---
-title: From Sensor Measurement to Vehicle Motion
+title: "From Sensor Measurement to Vehicle Motion"
 description: "A systems-level autonomy pipeline: time-aligned sensing, learned representation, BEV/world state, prediction, planning, control and supervision."
 sidebar:
   order: 3

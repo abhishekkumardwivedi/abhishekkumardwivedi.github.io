@@ -1,6 +1,6 @@
 ---
-title: Math Behind Modern AI
-description: A systems-oriented mathematical reference for modern learned models: linear operators, convolution, attention, optimization, probabilistic outputs, state-space dynamics, numerical precision and runtime cost.
+title: "Math Behind Modern AI"
+description: "A systems-oriented mathematical reference for modern learned models: linear operators, convolution, attention, optimization, probabilistic outputs, state-space dynamics, numerical precision and runtime cost."
 sidebar:
   order: 1
 ---

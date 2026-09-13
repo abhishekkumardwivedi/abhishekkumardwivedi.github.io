@@ -1,6 +1,6 @@
 ---
 title: "SOTIF in Practice: Finding the Unsafe Without a Fault"
-description: A hands-on method for discovering triggering conditions, functional insufficiencies, foreseeable misuse, and residual risk in autonomous-driving functions.
+description: "A hands-on method for discovering triggering conditions, functional insufficiencies, foreseeable misuse, and residual risk in autonomous-driving functions."
 sidebar:
   order: 15
 ---

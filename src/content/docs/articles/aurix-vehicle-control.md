@@ -1,6 +1,6 @@
 ---
 title: "AURIX for Vehicle Control: Building a Deterministic Safety Island"
-description: A practical architecture for accepting motion requests, supervising them, and controlling actuators with an AURIX safety MCU.
+description: "A practical architecture for accepting motion requests, supervising them, and controlling actuators with an AURIX safety MCU."
 sidebar:
   order: 14
 ---

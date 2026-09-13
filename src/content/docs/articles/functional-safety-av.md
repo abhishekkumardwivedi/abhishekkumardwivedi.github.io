@@ -1,6 +1,6 @@
 ---
 title: "Functional Safety in Practice: From Hazard to Fault-Tolerant Control"
-description: Applying ISO 26262 thinking to autonomous-vehicle electronics, control paths, degraded operation, diagnostics, and release evidence.
+description: "Applying ISO 26262 thinking to autonomous-vehicle electronics, control paths, degraded operation, diagnostics, and release evidence."
 sidebar:
   order: 16
 ---

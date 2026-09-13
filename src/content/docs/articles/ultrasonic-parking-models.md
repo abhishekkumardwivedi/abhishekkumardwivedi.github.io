@@ -1,6 +1,6 @@
 ---
-title: Ultrasonic Parking Models
-description: An expert view of ultrasonic sensing for parking: time-of-flight geometry, beam patterns, multipath, cross-talk, occupancy evidence and low-speed fusion.
+title: "Ultrasonic Parking Models"
+description: "An expert view of ultrasonic sensing for parking: time-of-flight geometry, beam patterns, multipath, cross-talk, occupancy evidence and low-speed fusion."
 sidebar:
   order: 9
 ---

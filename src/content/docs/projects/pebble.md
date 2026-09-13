@@ -1,6 +1,6 @@
 ---
-title: Pebble — Expressive Desktop Robot
-description: A compact expressive robot project combining user-experience-first industrial design, CAD, mechanism design, simulation, embedded electronics, and motion.
+title: "Pebble — Expressive Desktop Robot"
+description: "A compact expressive robot project combining user-experience-first industrial design, CAD, mechanism design, simulation, embedded electronics, and motion."
 ---
 
 <div class="pebble-project-hero">

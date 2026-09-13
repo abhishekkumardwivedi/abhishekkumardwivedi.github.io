@@ -1,6 +1,6 @@
 ---
-title: IMU & GNSS Models
-description: An expert treatment of inertial/GNSS estimation: strapdown integration, error-state filtering, frames, observability, time alignment, RTK quality and learned residual models.
+title: "IMU & GNSS Models"
+description: "An expert treatment of inertial/GNSS estimation: strapdown integration, error-state filtering, frames, observability, time alignment, RTK quality and learned residual models."
 sidebar:
   order: 8
 ---

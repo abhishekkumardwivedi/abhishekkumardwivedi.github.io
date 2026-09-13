@@ -1,6 +1,6 @@
 ---
-title: Radar Encoders
-description: An expert view of automotive radar perception: FMCW signal products, range/Doppler/angle ambiguity, sparse detections, cubes, temporal accumulation and fusion.
+title: "Radar Encoders"
+description: "An expert view of automotive radar perception: FMCW signal products, range/Doppler/angle ambiguity, sparse detections, cubes, temporal accumulation and fusion."
 sidebar:
   order: 7
 ---

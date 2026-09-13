@@ -1,6 +1,6 @@
 ---
-title: Safety & Engineering Assurance
-description: SOTIF, functional safety, automotive AI assurance, cybersecurity, systems engineering, and evidence-driven release decisions.
+title: "Safety & Engineering Assurance"
+description: "SOTIF, functional safety, automotive AI assurance, cybersecurity, systems engineering, and evidence-driven release decisions."
 ---
 
 Safety-critical engineering needs several complementary lenses. These articles separate fault-free functional limitations, malfunctioning behaviour, and learning-enabled-system risks while showing how their evidence eventually meets at vehicle level.

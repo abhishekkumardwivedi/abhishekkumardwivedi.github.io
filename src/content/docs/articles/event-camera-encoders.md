@@ -1,6 +1,6 @@
 ---
-title: Event Camera Encoders
-description: An expert view of event-camera representation, timestamp semantics, windowing, motion information, noise, sparse processing and fusion with frame-based sensors.
+title: "Event Camera Encoders"
+description: "An expert view of event-camera representation, timestamp semantics, windowing, motion information, noise, sparse processing and fusion with frame-based sensors."
 sidebar:
   order: 5
 ---

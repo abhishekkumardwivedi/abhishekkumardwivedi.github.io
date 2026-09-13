@@ -1,6 +1,6 @@
 ---
-title: Algorithms & Problem Solving
-description: Reusable algorithm patterns, data structures, complexity reasoning, and concise notes from solved problems.
+title: "Algorithms & Problem Solving"
+description: "Reusable algorithm patterns, data structures, complexity reasoning, and concise notes from solved problems."
 ---
 
 This section will turn individual coding exercises into reusable engineering knowledge. The emphasis will be on recognising a pattern, deriving the solution, proving why it works, understanding complexity, and recording the mistakes that commonly lead to incorrect or slow implementations.

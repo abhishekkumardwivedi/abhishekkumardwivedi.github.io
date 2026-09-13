@@ -1,6 +1,6 @@
 ---
-title: Articles
-description: Engineering notes on embedded platforms, automotive systems, autonomy, edge AI, safety, and technical leadership.
+title: "Articles"
+description: "Engineering notes on embedded platforms, automotive systems, autonomy, edge AI, safety, and technical leadership."
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';

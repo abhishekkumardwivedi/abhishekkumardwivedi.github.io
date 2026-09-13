@@ -1,6 +1,6 @@
 ---
-title: Business, Product & Leadership
-description: Product strategy, entrepreneurship, engineering leadership, organisational design, and technology-to-market thinking.
+title: "Business, Product & Leadership"
+description: "Product strategy, entrepreneurship, engineering leadership, organisational design, and technology-to-market thinking."
 ---
 
 This section connects technical possibility with customer value, product choices, organisational capability, and sustainable execution. It reflects the intersection of engineering leadership with strategic entrepreneurship and innovation.

@@ -1,6 +1,6 @@
 ---
-title: HD Maps & RTK Localization
-description: How high-definition maps and centimeter-level GNSS corrections turn global positioning into a reliable localization layer for autonomous driving.
+title: "HD Maps & RTK Localization"
+description: "How high-definition maps and centimeter-level GNSS corrections turn global positioning into a reliable localization layer for autonomous driving."
 sidebar:
   order: 9
 ---

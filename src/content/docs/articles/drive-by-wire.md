@@ -1,6 +1,6 @@
 ---
-title: Drive-by-Wire Vehicle Platform
-description: A hardware-focused research section covering the electrical, electronic, power and safety architecture required to execute autonomous vehicle motion.
+title: "Drive-by-Wire Vehicle Platform"
+description: "A hardware-focused research section covering the electrical, electronic, power and safety architecture required to execute autonomous vehicle motion."
 ---
 
 This section documents the physical vehicle platform beneath autonomous driving intelligence.

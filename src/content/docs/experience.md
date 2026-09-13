@@ -1,6 +1,6 @@
 ---
-title: Experience
-description: Professional experience and technical leadership highlights.
+title: "Experience"
+description: "Professional experience and technical leadership highlights."
 ---
 
 ## Professional profile

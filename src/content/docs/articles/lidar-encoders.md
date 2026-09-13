@@ -1,6 +1,6 @@
 ---
-title: LiDAR Encoders
-description: An expert view of LiDAR representation: motion compensation, pillars, sparse voxels, range view, point encoders, sparsity economics and BEV handoff.
+title: "LiDAR Encoders"
+description: "An expert view of LiDAR representation: motion compensation, pillars, sparse voxels, range view, point encoders, sparsity economics and BEV handoff."
 sidebar:
   order: 6
 ---

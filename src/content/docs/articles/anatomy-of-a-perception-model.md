@@ -1,6 +1,6 @@
 ---
-title: Anatomy of a Perception Model
-description: How stems, backbones, encoders, necks, heads, decoders, losses, and post-processing fit into a usable perception model.
+title: "Anatomy of a Perception Model"
+description: "How stems, backbones, encoders, necks, heads, decoders, losses, and post-processing fit into a usable perception model."
 sidebar:
   order: 2
 ---

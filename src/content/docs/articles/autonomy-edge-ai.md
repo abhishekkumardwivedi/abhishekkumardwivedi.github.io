@@ -1,6 +1,6 @@
 ---
-title: Autonomy & Edge AI
-description: A systems-oriented autonomy library covering measurement contracts, learned sensor representations, metric BEV, temporal state, prediction, world models and deployment.
+title: "Autonomy & Edge AI"
+description: "A systems-oriented autonomy library covering measurement contracts, learned sensor representations, metric BEV, temporal state, prediction, world models and deployment."
 ---
 
 This section treats autonomy as a **state-estimation, representation and control problem implemented with learned and classical components**, not as a catalogue of neural-network names.

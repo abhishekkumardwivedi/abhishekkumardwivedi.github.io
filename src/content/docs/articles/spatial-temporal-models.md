@@ -1,6 +1,6 @@
 ---
-title: Spatial–Temporal Models
-description: An expert treatment of temporal perception: ego-motion alignment, causal memory, dynamic objects, recurrent/attention/state-space designs, latency and state lifecycle.
+title: "Spatial–Temporal Models"
+description: "An expert treatment of temporal perception: ego-motion alignment, causal memory, dynamic objects, recurrent/attention/state-space designs, latency and state lifecycle."
 sidebar:
   order: 10
 ---

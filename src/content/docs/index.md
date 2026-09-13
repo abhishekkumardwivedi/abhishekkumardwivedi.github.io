@@ -1,6 +1,6 @@
 ---
-title: Abhishek Kumar Dwivedi
-description: Complex-system architect and engineering leader across automotive, embedded platforms, intelligent edge systems, and product innovation.
+title: "Abhishek Kumar Dwivedi"
+description: "Complex-system architect and engineering leader across automotive, embedded platforms, intelligent edge systems, and product innovation."
 template: splash
 hero:
   title: Engineering complex systems. Building meaningful products.

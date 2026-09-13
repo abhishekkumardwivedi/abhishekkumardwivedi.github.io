@@ -1,6 +1,6 @@
 ---
-title: Selected Projects
-description: Selected automotive, edge AI, platform, robotics, and systems-engineering projects.
+title: "Selected Projects"
+description: "Selected automotive, edge AI, platform, robotics, and systems-engineering projects."
 ---
 
 ## Archonix

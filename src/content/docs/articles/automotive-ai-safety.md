@@ -1,6 +1,6 @@
 ---
 title: "AI Safety in the Vehicle: From Dataset to Runtime Guardrails"
-description: Practical safety assurance for automotive AI across data, training, verification, deployment, monitoring, and controlled change.
+description: "Practical safety assurance for automotive AI across data, training, verification, deployment, monitoring, and controlled change."
 sidebar:
   order: 17
 ---

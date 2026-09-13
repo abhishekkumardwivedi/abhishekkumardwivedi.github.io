@@ -1,6 +1,6 @@
 ---
-title: About Me
-description: Background, interests, and engineering perspective of Abhishek Kumar Dwivedi.
+title: "About Me"
+description: "Background, interests, and engineering perspective of Abhishek Kumar Dwivedi."
 ---
 
 My perspective as an engineer and product leader is strongly shaped by my **Master’s in Strategic Entrepreneurship & Innovation from King’s College London**. The programme helped me look beyond whether a technology can be built and ask equally important questions: Which problem should it solve? Who will value it? How should the product, business model, organisation, and roadmap evolve together?

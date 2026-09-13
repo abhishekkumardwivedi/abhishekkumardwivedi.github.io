@@ -1,6 +1,6 @@
 ---
-title: World Models
-description: An expert systems view of world models for autonomy: belief state, observability, dynamics, multimodal futures, occupancy/agent representations, action conditioning and planning interfaces.
+title: "World Models"
+description: "An expert systems view of world models for autonomy: belief state, observability, dynamics, multimodal futures, occupancy/agent representations, action conditioning and planning interfaces."
 sidebar:
   order: 12
 ---

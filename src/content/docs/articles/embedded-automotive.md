@@ -1,6 +1,6 @@
 ---
-title: Embedded & Automotive Systems
-description: Vehicle compute, heterogeneous SoCs, deterministic control, memory/data movement, security boundaries and system-level integration.
+title: "Embedded & Automotive Systems"
+description: "Vehicle compute, heterogeneous SoCs, deterministic control, memory/data movement, security boundaries and system-level integration."
 ---
 
 This section is written from a **system-architecture/debugging perspective**. It assumes familiarity with embedded Linux/Android/QNX concepts and focuses on the contracts that usually decide whether a vehicle platform is robust in production: execution ownership, buffer ownership, timestamps, address translation, synchronization, scheduling, security state, recovery and observability.
