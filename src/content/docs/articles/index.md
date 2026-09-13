@@ -19,12 +19,15 @@ This is a structured engineering library rather than a chronological blog. Choos
 
 Start with [Math Behind Modern AI](/articles/math-behind-modern-ai/) for the foundations. Continue to [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/) to see how backbones, necks, heads, encoders, and decoders fit together. Then read [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/) for the system-level view.
 
+For the practical build path, follow the [nuScenes Autonomy Pipeline](/articles/nuscenes-autonomy-pipeline/) and its stage-by-stage implementation articles. Stage 2 currently covers synchronized real-world sensor playback, timestamp skew, ego-frame geometry, LiDAR/radar visualization, and WebRTC streaming before any learned inference is added.
+
 From there, explore sensor-specific encoders, move into spatial–temporal modelling and BEV, then study **HD Maps & RTK Localization** before finishing with world models and deployment. The [Autonomy & Edge AI section](/articles/autonomy-edge-ai/) provides the complete sequence.
 
 ## Complete classification
 
 ### Autonomy & Edge AI
 
+- **Hands-on build:** [nuScenes Autonomy Pipeline](/articles/nuscenes-autonomy-pipeline/) and [Stage 2: Multi-Sensor Playback and Time Synchronization](/articles/nuscenes-pipeline-stage2/)
 - **Foundations:** [Math Behind Modern AI](/articles/math-behind-modern-ai/) and [Anatomy of a Perception Model](/articles/anatomy-of-a-perception-model/)
 - **System view:** [From Camera Frame to Driving Decision](/articles/camera-to-driving-decision/)
 - **Sensor intelligence:** [RGB camera](/articles/rgb-camera-encoders/), [event camera](/articles/event-camera-encoders/), [LiDAR](/articles/lidar-encoders/), [radar](/articles/radar-encoders/), [IMU & GNSS](/articles/imu-gnss-models/), and [ultrasonic](/articles/ultrasonic-parking-models/)
