@@ -68,7 +68,7 @@ jobs:
       - name: Verify site build
         shell: bash
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Commit repaired frontmatter
