@@ -63,6 +63,8 @@ export default defineConfig({
               label: 'Autonomy & Edge AI',
               items: [
                 { label: 'Section Overview', slug: 'articles/autonomy-edge-ai' },
+                { label: 'nuScenes Hands-on Pipeline', slug: 'articles/nuscenes-autonomy-pipeline' },
+                { label: 'Stage 2: Sensor Playback & Sync', slug: 'articles/nuscenes-pipeline-stage2' },
                 { label: 'Math Behind Modern AI', slug: 'articles/math-behind-modern-ai' },
                 { label: 'Anatomy of a Perception Model', slug: 'articles/anatomy-of-a-perception-model' },
                 { label: 'Camera Frame to Driving Decision', slug: 'articles/camera-to-driving-decision' },
