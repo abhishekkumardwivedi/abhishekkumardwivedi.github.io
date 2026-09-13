@@ -1,136 +1,474 @@
 ---
 title: BEV Model Selection
-description: Geometry-based, depth-lifted, query-based, voxel, and hybrid routes to bird’s-eye-view representations.
+description: An expert treatment of bird's-eye-view construction: coordinate contracts, depth lifting, query projection, voxel fusion, discretization, visibility, uncertainty and runtime cost.
 sidebar:
   order: 11
 ---
 
-A bird’s-eye-view representation expresses evidence in a ground-aligned coordinate system. It can make spatial relationships, map alignment, motion history, and multi-view fusion easier to reason about. BEV is a representation—not one model.
+Bird's-eye view (BEV) is not a model. It is a **metric intermediate coordinate system** in which evidence from different cameras, times and sensor modalities can be compared using vehicle/world geometry.
 
-The central question is how sensor evidence is transformed into that coordinate system.
+The design problem is therefore not “which BEV network is best?” It is:
+
+> **How is uncertain sensor evidence transferred into a common 3D/ground-aligned state without destroying the geometry, visibility and timing needed downstream?**
+
+Different BEV families answer that question differently.
+
+## 1. Define the BEV coordinate contract before choosing a network
+
+A BEV tensor is meaningless without its geometry.
+
+For example:
+
+```text
+reference frame: current ego frame
+x: forward, [-20, 80] m
+y: left,    [-50, 50] m
+cell size: 0.5 m
+shape: 200 × 200
+feature channels: 256
+reference timestamp: t_ref
+```
+
+Then cell `(i,j)` maps to a metric region by a deterministic convention.
+
+The contract should specify:
+
+- frame and axis orientation;
+- origin;
+- metric bounds;
+- cell/voxel resolution;
+- feature stride if a backbone further downsamples BEV;
+- reference timestamp/pose;
+- height treatment;
+- visibility/validity representation.
+
+Without this, two tensors with the same `[C,H,W]` shape can refer to completely different physical space.
+
+## 2. BEV discretization is a sensing decision
+
+For a fixed region, halving cell size approximately quadruples a 2D BEV grid.
+
+Example:
+
+```text
+100 m × 100 m at 0.5 m -> 200 × 200 = 40k cells
+100 m × 100 m at 0.25 m -> 400 × 400 = 160k cells
+```
+
+At 256 FP16 channels:
+
+```text
+200 × 200 × 256 × 2 bytes ≈ 20.5 MB
+400 × 400 × 256 × 2 bytes ≈ 81.9 MB
+```
+
+That is one feature tensor, before temporal history, gradients or intermediate activations.
+
+Grid resolution must therefore come from task geometry. If the planner needs 10 cm curb precision, a 1 m BEV cell cannot recover it later.
+
+## 3. Camera pixels do not have metric depth by themselves
+
+For camera intrinsics `K`, image point `p=[u,v,1]^T` and depth `d`:
+
+$$P_{cam}=dK^{-1}p$$
+
+Then extrinsics transform into ego frame:
+
+$$P_{ego}=T_{ego\leftarrow cam}P_{cam}$$
+
+The unknown `d` is the central camera-to-BEV ambiguity.
+
+Every camera BEV architecture must resolve that ambiguity by one of several mechanisms:
+
+```text
+explicit ground-plane assumption
+predicted depth distribution
+learned query-to-image association
+implicit 3D latent / voxel representation
+external depth sensor or supervision
+```
+
+That is the meaningful taxonomy.
+
+## 4. Inverse perspective mapping is a geometric baseline, not a complete 3D solution
+
+If a pixel is assumed to lie on the ground plane, calibration can intersect its ray with `z=0`.
+
+This works well for:
+
+- lane markings;
+- road texture;
+- planar drivable surface.
+
+It fails for:
+
+- vehicles;
+- pedestrians;
+- signs;
+- overpasses;
+- sloped/non-flat terrain.
+
+An elevated object can be projected to the wrong ground location because the ray-ground intersection lies behind the true object.
+
+IPM is useful because its errors are interpretable. It is an excellent geometry sanity baseline before learned lifting.
+
+## 5. Lift-Splat-style models represent depth as a distribution
+
+A common approach predicts, for each image feature location, a categorical depth distribution over bins:
+
+$$P(d_k|f_{uv})$$
+
+The image feature vector is “lifted” into a frustum volume:
+
+$$F(u,v,k)=f_{uv}\cdot P(d_k|f_{uv})$$
+
+Each frustum point is transformed into ego coordinates and accumulated (“splatted”) into BEV cells.
 
 ```mermaid
-flowchart TD
-    A["Sensor features"] --> B{"BEV construction"}
-    B --> C["Geometric projection"]
-    B --> D["Depth lift and splat"]
-    B --> E["Learned BEV queries"]
-    B --> F["Voxel or point aggregation"]
-    C --> G["BEV feature grid"]
-    D --> G
-    E --> G
-    F --> G
-    G --> H["Spatial-temporal BEV encoder"]
-    H --> I["Task-specific outputs"]
+flowchart LR
+    I["image features"] --> D["depth distribution"]
+    I --> L["lift along camera rays"]
+    D --> L
+    L --> X["camera -> ego transform"]
+    X --> S["scatter / pool into BEV"]
 ```
 
-## Why BEV is useful
+The important engineering costs are:
 
-- Common coordinate system for several views or modalities.
-- Direct representation of ground-plane distance and orientation.
-- Natural interface for occupancy, map, motion, and planning-related features.
-- Easier temporal alignment using ego pose.
-- Clearer geometric consistency checks.
+- depth-bin count;
+- frustum activation volume;
+- scatter/pooling implementation;
+- calibration sensitivity;
+- depth supervision/learning quality.
 
-BEV also introduces discretisation, bounded spatial coverage, calibration dependence, and memory cost proportional to grid size and channel count.
+## 6. Depth bins define a quantization model
 
-## Major construction families
+Uniform depth bins are simple but allocate equal resolution to distant and near space.
 
-### Inverse perspective mapping
+Alternative spacing can be more appropriate:
 
-Pixels are projected onto an assumed ground surface using calibration. This is simple and interpretable, but objects above the ground and non-flat terrain violate the assumption.
+```text
+uniform depth
+inverse depth
+log-spaced depth
+learned/nonuniform bins
+```
 
-### Depth lifting and splatting
+Near-field metric error matters more for planning, while distant depth is inherently less precise from vision.
 
-Image features are distributed along predicted depth, transformed into 3D, and accumulated into a BEV grid. This introduces explicit geometry but depends on depth quality and can create a large intermediate volume.
+The binning policy should match expected uncertainty and range, not merely a paper's default.
 
-### Query-based BEV Transformers
+## 7. Frustum volume can dominate activation memory
 
-Learned BEV queries attend to image or sensor features using calibration and learned offsets. They can gather information flexibly without materialising every depth sample. Attention sampling, training stability, and backend support become important.
+Suppose camera features are `[Ncam, C, Hf, Wf]` and depth uses `D` bins.
 
-### Voxel- or point-derived BEV
+A naive lifted tensor scales roughly as:
 
-3D points or sparse voxels are aggregated vertically into a BEV feature map. This naturally preserves measured geometry but depends on the density and coverage of the source sensor.
+$$N_{cam}\times C\times D\times H_f\times W_f$$
 
-### Hybrid BEV
+Even when implementation avoids materializing the full tensor, the conceptual workload grows with depth hypotheses.
 
-Several paths may contribute evidence to one grid—for example, geometry-derived features combined with learned queries or temporal memory. Hybrid systems offer flexibility but require disciplined ownership of coordinates, confidence, and duplicates.
+This is a major reason query-based methods are attractive: they can sample selected image locations/depth hypotheses rather than build all rays densely.
 
-## Selection matrix
+## 8. Query-based BEV reverses the question
 
-| Constraint or objective | Family to investigate first |
-|---|---|
-| Flat-region geometric baseline | Inverse perspective mapping |
-| Explicit camera depth reasoning | Lift-and-splat |
-| Flexible multiview contextual sampling | Query-based BEV |
-| Strong direct 3D measurements | Voxel or point aggregation |
-| Mixed sensor evidence | Hybrid with confidence-aware fusion |
-| Tight activation-memory budget | Sparse or query-sampled alternatives |
+Instead of lifting every image feature into 3D, create BEV queries at known metric locations and ask:
 
-This matrix guides experiments; it does not select a production architecture.
+> Which image features are relevant to this BEV location?
 
-## Generic point-to-BEV scatter
+For a BEV reference point `P_ego`, project it into camera `i`:
+
+$$p_i \sim K_i T_{cam_i\leftarrow ego} P_{ego}$$
+
+Then sample image features near valid projected locations.
+
+```text
+BEV query (metric location)
+      ↓ calibration projection
+candidate image locations
+      ↓ deformable / cross attention
+aggregated BEV feature
+```
+
+This keeps the BEV grid explicit while making evidence retrieval learned.
+
+## 9. Query methods still rely on geometry
+
+It is misleading to call them “geometry-free Transformers.” Camera intrinsics/extrinsics define where a BEV query should look.
+
+Learned offsets can handle projection/model errors, but they should refine geometry rather than replace it blindly.
+
+If calibration is wrong, attention may still produce plausible features while spatial accuracy degrades — which makes calibration perturbation testing especially important.
+
+## 10. Visibility must be separated from feature value
+
+A BEV location may project:
+
+- into one camera;
+- into several overlapping cameras;
+- outside every camera;
+- behind the camera;
+- into a currently occluded region.
+
+A zero feature is therefore ambiguous unless visibility is explicit.
+
+Useful BEV metadata includes:
+
+```text
+camera visibility mask
+number of contributing views
+observation confidence
+last observed time
+```
+
+This becomes even more important during temporal fusion, where old evidence can persist in currently unobserved cells.
+
+## 11. Camera overlap is both useful and dangerous
+
+Overlapping cameras provide redundant evidence, but their observations can disagree because of:
+
+- timestamp skew;
+- exposure differences;
+- calibration error;
+- rolling shutter;
+- occlusion/parallax;
+- different image quality.
+
+A fusion function should not assume two projected features are equivalent simply because they land in the same BEV cell.
+
+Cross-view consistency can be an explicit training/evaluation signal.
+
+## 12. LiDAR-to-BEV has measured depth but still requires representation choices
+
+LiDAR points already have metric coordinates after calibration/deskew.
+
+They can be converted into BEV through:
+
+```text
+pillars -> 2D pseudo-image
+3D sparse voxels -> vertical collapse
+point features -> scatter/pooling
+```
+
+The ambiguity is no longer depth, but **how much vertical structure and point-level information to retain**.
+
+Camera BEV and LiDAR BEV can therefore share the same metric grid even though their upstream uncertainty is very different.
+
+## 13. Radar-to-BEV should not discard Doppler semantics
+
+Radar detections can be scattered into the same grid, but a good radar BEV feature should retain:
+
+```text
+radial velocity
+RCS/SNR
+sensor identity
+relative age
+measurement quality
+```
+
+A generic occupancy channel throws away much of radar's distinctive value.
+
+The common BEV coordinate system should standardize geometry, not erase modality-specific evidence.
+
+## 14. Early versus late BEV fusion changes information loss
+
+### Early/common-BEV feature fusion
+
+```text
+camera features -> camera BEV ┐
+LiDAR features -> lidar BEV   ├-> fused BEV encoder
+radar features -> radar BEV   ┘
+```
+
+Advantages:
+
+- rich cross-modal interactions;
+- one spatial state for temporal memory/heads.
+
+Risks:
+
+- calibration errors contaminate learned fusion;
+- confidence semantics can be hidden.
+
+### Late/object-level fusion
+
+Each modality detects independently, then object hypotheses are fused.
+
+Advantages:
+
+- modular/debuggable;
+- modality-specific models remain isolated.
+
+Risks:
+
+- information discarded by each detector cannot be recovered;
+- association becomes a hard discrete boundary.
+
+Neither is universally superior. The choice is about where information is compressed.
+
+## 15. Height collapse must be task-aware
+
+A pure 2D BEV often pools along height. That can confuse:
+
+```text
+overpass vs road below
+overhanging sign vs obstacle
+truck body vs free ground under chassis
+multi-level parking
+```
+
+Options include:
+
+- several vertical bins;
+- 3D occupancy voxels;
+- height statistics/channels;
+- object-level vertical state.
+
+“BEV” should not automatically mean all 3D structure is discarded.
+
+## 16. Occupancy BEV requires observed/free/unknown semantics
+
+An occupancy grid should distinguish:
+
+```text
+occupied
+observed free
+unknown / not visible
+```
+
+Camera-only occupancy may infer hidden structure probabilistically, but that inferred occupancy should not be confused with directly observed free space.
+
+For LiDAR, ray tracing gives strong free-space evidence until the first return. For cameras, free-space inference is learned and depends on visibility/depth.
+
+The planner needs those confidence differences.
+
+## 17. Temporal BEV uses geometry to make memory cheap
+
+Past BEV can be warped by ego motion into the current frame:
+
+$$F_{t-1}^{aligned}=Warp(F_{t-1},T_{ego_t\leftarrow ego_{t-1}})$$
+
+Then temporal fusion combines it with current evidence.
+
+The advantages are substantial:
+
+- static world aligns geometrically;
+- camera view changes are already abstracted away;
+- map features naturally share coordinates.
+
+But dynamic objects still need residual motion modeling, and pose uncertainty limits warp accuracy.
+
+## 18. BEV localization error has direct spatial meaning
+
+If pose yaw has error `δθ`, a point at distance `r` can shift laterally approximately:
+
+$$e \approx r\delta\theta$$
+
+For `r=50 m` and `δθ=1°≈0.01745 rad`, the error is about 0.87 m.
+
+This is why high-quality ego pose and calibration are inseparable from BEV accuracy. A model cannot reliably compensate arbitrary pose errors without sacrificing metric consistency.
+
+## 19. Learned depth and localization uncertainty should not be collapsed into one confidence
+
+A BEV cell can be uncertain because of:
+
+- ambiguous monocular depth;
+- poor camera calibration;
+- uncertain ego pose;
+- occlusion;
+- weak image evidence;
+- stale temporal memory.
+
+Those sources propagate differently.
+
+A mature architecture should at least preserve enough metadata to diagnose them separately, even if the neural model ultimately outputs a learned confidence.
+
+## 20. Grid design should follow planner and sensor physics
+
+Questions to answer before freezing BEV bounds:
+
+```text
+How far ahead must planning reason?
+How much rear/side coverage is needed?
+What is the smallest obstacle/lane feature that matters?
+How accurate is localization at the far edge?
+What sensor provides evidence there?
+How much activation memory is sustainable?
+```
+
+A symmetric `[-50,50]×[-50,50]` grid is convenient for experiments, but production coverage is often intentionally asymmetric.
+
+## 21. Multi-resolution BEV can spend detail where it matters
+
+Near-field parking and far-field highway perception have different resolution needs.
+
+Options include:
+
+- high-resolution near grid + coarse far grid;
+- polar/log-polar representations;
+- hierarchical feature pyramids;
+- sparse query allocation.
+
+These reduce memory but complicate downstream planning interfaces. The planner may prefer one simple metric grid even if the perception backbone uses a hierarchical representation internally.
+
+## 22. Scatter/gather operations are deployment-critical
+
+Camera lift-splat and point/radar BEV construction often rely on:
+
+```text
+indexing
+scatter-add
+segment reduction
+voxel pooling
+sampling/interpolation
+```
+
+These may be far less optimized on an embedded NPU than convolutions.
+
+A BEV architecture with fewer FLOPs can run slower if it spends most of its time in unsupported scatter/gather operations or CPU fallback.
+
+Profile the actual lowered graph, not only backbone FLOPs.
+
+## 23. A simple BEV memory calculation
 
 ```python
-import torch
+def bev_mb(x_range, y_range, cell, channels, bytes_per_value=2):
+    nx = int((x_range[1]-x_range[0]) / cell)
+    ny = int((y_range[1]-y_range[0]) / cell)
+    mb = nx * ny * channels * bytes_per_value / 1024**2
+    return nx, ny, mb
 
-
-def scatter_to_bev(points_xy, point_features, bounds, resolution):
-    """Average point features into a generic BEV grid."""
-    x_min, y_min, x_max, y_max = bounds
-    width = int((x_max - x_min) / resolution)
-    height = int((y_max - y_min) / resolution)
-
-    x = torch.floor((points_xy[:, 0] - x_min) / resolution).long()
-    y = torch.floor((points_xy[:, 1] - y_min) / resolution).long()
-    valid = (x >= 0) & (x < width) & (y >= 0) & (y < height)
-
-    x, y = x[valid], y[valid]
-    features = point_features[valid]
-
-    bev = torch.zeros(height, width, features.shape[-1])
-    count = torch.zeros(height, width, 1)
-    bev.index_put_((y, x), features, accumulate=True)
-    count.index_put_((y, x), torch.ones_like(features[:, :1]),
-                     accumulate=True)
-    return (bev / count.clamp_min(1.0)).permute(2, 0, 1)
+for cell in (1.0, 0.5, 0.25):
+    print(cell, bev_mb((-20,80), (-50,50), cell, 256))
 ```
 
-Production implementations use bounded memory, deterministic reduction, batching, valid-height handling, and accelerator-friendly scatter or pooling operations.
+This should be one of the first calculations in BEV design, not an afterthought after model selection.
 
-## Grid design
+## 24. How to evaluate a camera-to-BEV transform
 
-BEV memory approximately scales with:
+Before evaluating final detection mAP, test the representation itself:
 
-`height_cells × width_cells × channels × bytes_per_value`
+- project known 3D landmarks into/from cameras;
+- perturb intrinsics/extrinsics systematically;
+- measure BEV alignment in overlap regions;
+- inspect depth errors by distance;
+- test ego-pose perturbation;
+- test missing-camera behavior;
+- test timestamp skew;
+- inspect visibility/unknown regions;
+- measure memory and scatter/sampling latency.
 
-Reducing cell size increases spatial precision but quadratically increases the number of cells across a fixed area. Coverage need not be symmetric, and multiresolution grids may allocate detail where it matters most.
+A final detector can partially hide BEV misalignment by learning biases. Geometry-specific tests expose the real problem earlier.
 
-Grid choice should follow the smallest structure that must be represented, localisation uncertainty, sensor resolution, task output, and memory budget.
+## 25. Selection framework
 
-## Temporal BEV
+| Requirement | Likely starting family |
+|---|---|
+| interpretable flat-road baseline | IPM / geometric projection |
+| explicit image depth reasoning | lift-splat / frustum pooling |
+| memory-efficient selective image sampling | query/deformable BEV |
+| strong measured 3D geometry | voxel/pillar LiDAR BEV |
+| multi-modal system | modality-specific encoders -> common metric BEV |
+| long temporal memory | ego-aligned BEV state + temporal fusion |
 
-Past BEV features can be transformed into the current ego frame and fused with current evidence. This makes BEV a useful memory surface, but quality depends on:
-
-- pose accuracy and timestamp alignment;
-- handling dynamic objects separately from static structure;
-- decay or confidence of old evidence;
-- state reset and map discontinuities;
-- bounded history and runtime memory.
-
-## How to select responsibly
-
-Build a comparison table for candidate approaches across:
-
-- calibration sensitivity;
-- depth or geometry supervision requirements;
-- spatial resolution and coverage;
-- activation memory and bandwidth;
-- supported operators and quantisation;
-- temporal alignment strategy;
-- robustness to missing views or modalities;
-- uncertainty and visibility modelling;
-- ease of debugging geometric errors;
-- compatibility with downstream outputs.
-
-The best BEV approach is not the one with the most elaborate projection. It is the one whose assumptions, error modes, data requirements, and runtime behaviour match the product’s operating domain.
+The correct BEV design is the one whose **coordinate assumptions, uncertainty, memory cost and operator set** fit the system. Benchmark accuracy matters only after those contracts are viable on the target platform.

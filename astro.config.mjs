@@ -68,7 +68,7 @@ export default defineConfig({
                 { label: 'Stage 3: Camera Feature Encoding', slug: 'articles/nuscenes-pipeline-stage3' },
                 { label: 'Math Behind Modern AI', slug: 'articles/math-behind-modern-ai' },
                 { label: 'Anatomy of a Perception Model', slug: 'articles/anatomy-of-a-perception-model' },
-                { label: 'Camera Frame to Driving Decision', slug: 'articles/camera-to-driving-decision' },
+                { label: 'Sensor Measurement to Vehicle Motion', slug: 'articles/camera-to-driving-decision' },
                 { label: 'Camera Encoder: ResNet-50 + FPN', slug: 'articles/rgb-camera-encoders' },
                 { label: 'Event Camera Encoders', slug: 'articles/event-camera-encoders' },
                 { label: 'LiDAR Encoders', slug: 'articles/lidar-encoders' },
@@ -94,13 +94,13 @@ export default defineConfig({
               label: 'Embedded & Automotive',
               items: [
                 { label: 'Section Overview', slug: 'articles/embedded-automotive' },
-                { label: 'Qualcomm SoC Compute Map', slug: 'articles/qualcomm-soc-compute-map' },
+                { label: 'SoC Compute, Memory & Trust', slug: 'articles/qualcomm-soc-compute-map' },
                 { label: 'Qualcomm DSP Domains', slug: 'articles/qualcomm-dsp-domains' },
                 { label: 'TrustZone & the TEE', slug: 'articles/qualcomm-trustzone-tee' },
                 { label: 'Hexagon NPU / HTP', slug: 'articles/qualcomm-npu-htp' },
                 { label: 'Camera ISP Pipeline', slug: 'articles/qualcomm-camera-isp' },
                 { label: 'Display Processing / DPU', slug: 'articles/qualcomm-display-dpu' },
-                { label: 'DMA, SMMU & Data Movement', slug: 'articles/qualcomm-dma-smmu' },
+                { label: 'DMA, SMMU & Shared Buffers', slug: 'articles/qualcomm-dma-smmu' },
                 { label: 'AURIX Vehicle Control', slug: 'articles/aurix-vehicle-control' }
               ]
             },

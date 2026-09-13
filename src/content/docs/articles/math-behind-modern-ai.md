@@ -1,246 +1,550 @@
 ---
 title: Math Behind Modern AI
-description: How linear algebra, probability, optimisation, convolution, recurrence, attention, and state-space mathematics become modern learning systems.
+description: A systems-oriented mathematical reference for modern learned models: linear operators, convolution, attention, optimization, probabilistic outputs, state-space dynamics, numerical precision and runtime cost.
 sidebar:
   order: 1
 ---
 
-Neural networks can appear to be a collection of very different inventions: CNNs for images, RNNs for sequences, Transformers for context, graph networks for relationships, and state-space models for efficient memory. Underneath their names, however, they are built from a surprisingly small set of mathematical ideas.
+The useful mathematics behind modern AI is not a taxonomy of CNNs, Transformers and state-space models. It is a small set of operations and inductive biases that repeatedly appear in different computational arrangements.
 
-The important question is not merely *which model is popular?* It is:
+For a technical system designer, the important questions are:
 
-> What structure does the data contain, what relationship must be learned, and what computation can represent it efficiently?
+```text
+What information is represented by the tensor axes?
+Which dimensions are mixed by this operator?
+What invariance/equivariance is being assumed?
+How does receptive/context range grow?
+What is the numerical and memory cost?
+How does uncertainty propagate into the output?
+What changes when the graph is lowered to real hardware?
+```
 
-This article develops that intuition without prescribing a particular product architecture.
+This article treats those questions as the mathematical substrate for perception and autonomy.
 
-## Everything begins as a tensor
+## 1. A tensor shape is part of the semantic contract
 
-A model does not directly see a road, an object, a sound, or a sentence. It receives numbers arranged into tensors.
+A tensor is not meaningful from dimensions alone.
 
-- A scalar is one number.
-- A vector is an ordered list of numbers.
-- A matrix is a two-dimensional grid.
-- A tensor generalises the idea to more dimensions.
+```text
+[B, Ncam, C, H, W]
+```
 
-An image may be represented by height, width, and colour channels. A sequence adds a time or token dimension. A batch adds another dimension. Intermediate features may have little human-readable meaning, but their shape describes how information is organised for computation.
+can mean:
 
-Most neural-network execution eventually reduces to a compact vocabulary:
+```text
+B      independent samples
+Ncam   physical camera identity
+C      learned channels
+H,W    image-space coordinates
+```
 
-- matrix multiplication or convolution;
-- addition and element-wise multiplication;
-- nonlinear activation;
-- normalisation;
-- pooling, sampling, or reduction;
-- comparison against a loss;
-- gradient-based parameter updates.
+while:
 
-Architectures differ mainly in how they arrange these operations and what assumptions they embed about the data.
+```text
+[B, C, Y, X]
+```
 
-## Linear algebra: learning useful projections
+may be a metric BEV grid.
 
-A dense neural layer can be written conceptually as:
+Both may contain the same number of values while describing completely different geometry.
 
-`y = W x + b`
+A tensor contract should therefore include:
 
-The input vector `x` is multiplied by a learned weight matrix `W`, then shifted by a bias `b`. Geometrically, this operation projects, rotates, scales, combines, or separates features into a new representation.
+```text
+axis meaning
+coordinate frame / origin
+units
+reference timestamp
+validity mask
+layout / dtype
+```
 
-This same idea appears almost everywhere:
+Most serious autonomy integration bugs are semantic-shape errors rather than matrix-algebra errors.
 
-- classifiers project features toward class scores;
-- embeddings map discrete identities into continuous vectors;
-- attention creates query, key, and value projections;
-- convolution combines values from a local neighbourhood;
-- recurrent models transform both the current input and previous state.
+## 2. Linear maps are channel/feature mixers
 
-Large models are therefore not escaping linear algebra. They are composing many learned projections with carefully placed nonlinear and structural operations.
+A dense affine layer is:
 
-## Why nonlinearity is essential
+$$y=Wx+b$$
 
-Stacking only linear layers still produces one larger linear transformation. Such a network cannot learn the complex curved boundaries needed for real-world data.
+A 1×1 convolution is the same idea applied independently at every spatial location:
 
-Activation functions change this:
+$$y_{:,h,w}=W x_{:,h,w}+b$$
 
-- **ReLU** keeps positive values and suppresses negative ones. It is simple and computationally efficient.
-- **Leaky ReLU** preserves a small negative slope, reducing permanently inactive units.
-- **Sigmoid** maps values into the range zero to one and is useful for gates or probability-like outputs.
-- **Tanh** produces a bounded signed output and historically appears in recurrent state updates.
-- **GELU and SiLU** provide smooth gating behaviour and are common in modern architectures.
+This is why a `2048 -> 256` projection in a camera encoder can reduce channel width without changing spatial coordinates.
 
-The activation is not just a cosmetic choice. It influences gradient flow, numerical behaviour, sparsity, hardware efficiency, and how easily the network can represent complex functions.
+The cost per location is approximately:
 
-## CNN: mathematical locality
+$$C_{in}C_{out}$$
 
-A convolutional neural network assumes that nearby values are strongly related and that a useful pattern may occur at many positions.
+multiply-accumulates, so channel width directly affects arithmetic and activation bandwidth in every downstream layer.
 
-A small learned kernel slides across the input. At every position it performs a weighted local combination. Early filters may respond to edges, corners, colour transitions, or texture. Deeper layers combine these into shapes, parts, objects, and more abstract spatial features.
+Low-rank/factorized projections exploit the fact that the learned linear map may not need full rank:
 
-Three ideas make convolution powerful:
+$$W\approx UV$$
 
-1. **Local connectivity** — each output initially depends on a neighbourhood rather than the entire input.
-2. **Weight sharing** — the same kernel is reused at different positions.
-3. **Hierarchical receptive fields** — deeper features indirectly observe larger regions.
+reducing parameters and compute when the representation admits it.
 
-This gives CNNs a strong inductive bias for images and other grid-like signals. It also reduces parameters compared with connecting every input position to every output.
+## 3. Convolution encodes translation equivariance and locality
 
-Variants such as strided, dilated, depthwise, pointwise, transposed, and sparse convolution change how the neighbourhood is sampled or combined. The shared idea remains: exploit known spatial structure instead of asking a general matrix to discover everything from scratch.
+For a 2D convolution:
 
-## RNN: state carried through time
+$$Y[o,i,j]=\sum_c\sum_{u,v}W[o,c,u,v]X[c,i+u,j+v]$$
 
-For sequential data, the present may depend on what happened earlier. A recurrent neural network represents this through a hidden state:
+The same kernel weights are reused across spatial positions. Ignoring boundary effects, translating the input translates the response — a useful inductive bias for image features.
 
-`h(t) = f(Wx · x(t) + Wh · h(t-1) + b)`
+The output dimension is:
 
-At time `t`, the network combines the current input with its previous state. The state acts as a compressed memory of the past.
+$$H_{out}=\left\lfloor\frac{H+2P-D(K-1)-1}{S}+1\right\rfloor$$
 
-Plain RNNs struggle when important information must survive across many steps. During training, repeatedly multiplying gradients can make them shrink toward zero or grow uncontrollably. LSTM and GRU architectures address this with learned gates controlling what to retain, expose, update, or forget.
+where `K` is kernel, `S` stride, `P` padding and `D` dilation.
 
-Recurrence provides a natural streaming interpretation, but its sequential dependency can limit training parallelism. Each new state depends on the preceding state, so the entire sequence cannot always be processed simultaneously.
+This equation is not bookkeeping. In an autonomy encoder, stride determines the metric/image spacing between adjacent feature cells and therefore affects later projection into BEV.
 
-RNN, LSTM, and GRU are architecture families for sequence modelling. They should not be confused with *prediction* itself: temporal prediction is a task, while recurrence is one possible computational structure for solving it.
+## 4. Feature stride and receptive field are different
 
-## Attention: learning contextual relationships
+If a deep camera feature has stride 32, adjacent feature centers correspond to roughly 32 input pixels apart.
 
-Attention asks how strongly one element should use information from another.
+That does **not** mean each feature only sees a 32×32 input region.
 
-Each element is projected into three representations:
+For layer `l`, receptive field can be propagated using:
 
-- a **query** describing what it is looking for;
-- a **key** describing what it offers;
-- a **value** containing the information that may be passed onward.
+$$j_l=j_{l-1}S_l$$
 
-Queries are compared with keys using dot products. The scores are scaled and normalised, commonly with softmax. The resulting weights form a weighted combination of values.
+$$r_l=r_{l-1}+(K_l-1)D_lj_{l-1}$$
 
-Conceptually:
+where `j_l` is the effective input jump and `r_l` the receptive field.
 
-`Attention(Q, K, V) = softmax(QKᵀ / scale) V`
+A deep 8×14 feature grid can therefore carry context from much larger portions of the image. This is why enlarging a coarse activation map for display should not be interpreted as a pixel-level segmentation.
 
-This allows a model to build context dynamically. A feature can relate to nearby or distant features based on content rather than a fixed neighbourhood alone.
+## 5. Depthwise separable convolution changes arithmetic intensity
 
-Transformers combine attention with feed-forward layers, residual connections, normalisation, and positional information. Unlike a recurrent model, a Transformer can compare many sequence elements in parallel during training. The cost is that full attention commonly grows approximately with the square of sequence length, increasing memory and computation for long inputs.
+A standard `K×K` convolution costs roughly:
 
-Attention is valuable beyond language. Any problem involving contextual relationships between spatial regions, time steps, modalities, objects, or learned tokens may benefit from the same mathematics.
+$$HWK^2C_{in}C_{out}$$
 
-## State-space models: efficient evolving memory
+MACs.
 
-State-space models describe a system through a compact internal state that evolves as new input arrives:
+Depthwise + pointwise convolution costs approximately:
 
-`h(t) = A · h(t-1) + B · x(t)`
+$$HWK^2C_{in}+HWC_{in}C_{out}$$
 
-`y(t) = C · h(t) + D · x(t)`
+which can be much smaller.
 
-The matrices determine how previous state persists, how new input enters, and how output is produced. Modern selective state-space architectures make parts of this behaviour input-dependent, allowing the model to retain or suppress information dynamically.
+But fewer FLOPs do not always mean lower latency. Depthwise kernels can have lower arithmetic intensity and become memory/bandwidth limited. Hardware/compiler kernel quality matters.
 
-Their attraction is the possibility of long-context modelling with more favourable scaling than full attention. Although state updates appear recurrent, special mathematical structure can permit parallel training through scan-like operations while retaining efficient sequential inference.
+This is a recurring theme: **model algebra and accelerator efficiency are related but not identical.**
 
-State-space models do not make CNNs, recurrence, or attention obsolete. They introduce another trade-off between locality, contextual access, memory, parallelism, and deployment efficiency.
+## 6. Residual connections change optimization geometry
 
-## Graph networks: reasoning about relationships
+A residual block computes:
 
-Some data is naturally described as entities and relationships rather than a regular grid or sequence. A graph neural network represents entities as nodes and their relationships as edges.
+$$y=x+F(x)$$
 
-Each node collects messages from connected neighbours, combines them, and updates its representation. Multiple rounds allow information to propagate farther through the graph.
+Its Jacobian is:
 
-Graph mathematics is useful when topology matters: interacting agents, connected components, molecular structures, road networks, or relationships between detected entities. The graph can be fixed, learned, or constructed dynamically from proximity and semantics.
+$$\frac{\partial y}{\partial x}=I+\frac{\partial F}{\partial x}$$
 
-The key inductive bias is explicit: relationships determine which information should be exchanged.
+The identity term gives gradients a direct path through deep networks and makes learning perturbations around the identity easier.
 
-## Latent and generative models
+This is more informative than saying “ResNet solves vanishing gradients.” The residual parameterization changes the function class the optimizer traverses and remains useful in CNNs, Transformers and many modern blocks.
 
-Not every useful model produces a class label or a deterministic coordinate.
+## 7. Normalization is not one interchangeable operation
 
-**Autoencoders** learn to compress an input into a latent representation and reconstruct it. **Variational autoencoders** impose a probabilistic structure on that latent space. **Diffusion models** learn to reverse a gradual corruption process, generating or refining samples through repeated denoising.
+### BatchNorm
 
-These approaches help with representation learning, reconstruction, multimodal futures, data generation, and modelling uncertainty. Their usefulness depends on the task and execution budget; iterative generation may be expensive where strict latency is required.
+For channel statistics estimated across a training batch/spatial positions:
 
-## Loss functions define what “better” means
+$$\hat x=\frac{x-\mu_B}{\sqrt{\sigma_B^2+\epsilon}}$$
 
-A network learns only through the objective it is given. The loss function converts the difference between prediction and target into a scalar signal.
+then:
 
-Common mathematical patterns include:
+$$y=\gamma\hat x+\beta$$
 
-- cross-entropy for classification;
-- L1 or L2 distance for regression;
-- overlap-based losses for segmentation;
-- ranking or contrastive losses for representation learning;
-- likelihood-based objectives for probabilistic predictions;
-- weighted multi-task losses when several outputs are learned together.
+Inference typically uses running statistics. This creates a train/eval mode distinction.
 
-Loss design is part of system design. An objective can unintentionally favour common cases, average away rare outcomes, ignore calibration, or reward a numerically small error that is operationally important. The loss therefore encodes priorities—not merely mathematics.
+### LayerNorm
 
-## Backpropagation and optimisation
+Normalizes features within each sample/token and is independent of batch statistics, fitting Transformer-style models well.
 
-Training follows a repeated loop:
+Normalization choice affects:
 
-1. Run a forward pass to produce predictions.
-2. Compute the loss.
-3. Use the chain rule to calculate how each parameter contributed to that loss.
-4. Update parameters in a direction expected to reduce future loss.
+- optimization stability;
+- batch-size sensitivity;
+- quantization behavior;
+- compiler fusion;
+- numerical reproducibility.
 
-Gradient descent and optimisers such as SGD or Adam differ in how they scale, smooth, and accumulate updates. Learning-rate schedules control how aggressively the model changes over time.
+It should be understood as part of the deployed graph, not a training-only detail.
 
-Residual connections, normalisation, suitable initialisation, gradient clipping, regularisation, and data augmentation all help make optimisation stable and improve generalisation. They do not replace learning; they shape the mathematical landscape through which learning proceeds.
+## 8. Attention is a learned data-dependent mixing matrix
 
-## Probability and uncertainty
+Scaled dot-product attention is:
 
-A high score is not automatically a trustworthy probability. Real systems must distinguish prediction from confidence and confidence from calibration.
+$$A=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)$$
 
-Two broad uncertainty categories are useful:
+$$Y=AV$$
 
-- **Aleatoric uncertainty** comes from ambiguity or noise inherent in the observation.
-- **Epistemic uncertainty** comes from limited knowledge, insufficient data, or an unfamiliar operating condition.
+where:
 
-Softmax scores, entropy, ensembles, probabilistic outputs, calibration methods, and distribution-shift detection provide different views of uncertainty. None is a universal guarantee.
+$$Q=XW_Q,\quad K=XW_K,\quad V=XW_V$$
 
-For decision-making systems, the question is not only “What did the model predict?” but also “How reliable is that prediction here, and what should the wider system do when reliability is inadequate?”
+The matrix `A` is data-dependent: each query chooses how strongly to mix available values.
 
-## Geometry and time remain fundamental
+This is the central difference from convolution, whose spatial mixing pattern is fixed by the kernel neighborhood.
 
-Learning does not eliminate classical mathematics. Perception and physical-world reasoning still depend on coordinate systems, projection geometry, transforms, motion, filtering, interpolation, and time alignment.
+Full self-attention over `N` tokens requires an `N×N` score structure, producing approximately quadratic memory/compute growth in token count.
 
-A feature expressed in one frame may need to be transformed into another. Observations made at different times may describe different physical states. Tracking may combine a motion model with uncertain measurements. A learned representation can improve the observations, but it does not make coordinate and timing consistency optional.
+For perception, tokenization therefore matters as much as model depth:
 
-This is why robust intelligent systems frequently combine neural components with geometry, estimation, filtering, optimisation, rules, and safety supervision.
+```text
+image pixels -> too many tokens
+patch features -> fewer
+BEV cells -> potentially tens of thousands
+objects/agents -> hundreds
+```
 
-## The model must eventually execute
+Model architecture often revolves around controlling which relationships are allowed to become attention edges.
 
-A mathematically elegant architecture is not automatically a deployable one. Runtime cost depends on more than parameter count:
+## 9. Deformable attention is sparse learned sampling
 
-- tensor shapes and operator support;
-- dense versus sparse computation;
-- intermediate activation memory;
-- memory bandwidth and data movement;
-- numerical precision and quantisation;
-- kernel fusion and tiling;
-- CPU, GPU, DSP, or NPU partitioning;
-- batch size, latency, and concurrency;
-- unsupported operations that fall back to another processor.
+Instead of attending to every key, a query predicts/sample-selects a small number of locations:
 
-Compilation transforms the learned graph into operations supported efficiently by the target. Quantisation changes numerical representation, often from floating point to lower-precision integers. Memory planning determines where intermediate tensors live and when buffers can be reused.
+$$y_q=\sum_{m=1}^{M}a_{qm}F(p_q+\Delta p_{qm})$$
 
-The real unit of performance is therefore not the model name. It is the complete interaction between graph, compiler, runtime, memory system, accelerator, and surrounding application.
+where `M` is small compared with all spatial positions.
 
-## Choosing a model family conceptually
+This is particularly useful for camera-to-BEV and multi-scale perception because calibration can provide a reference location and learning only needs to refine/sample around it.
 
-| Structure in the problem | Useful mathematical bias |
-|---|---|
-| Local spatial patterns | Convolution and multiscale hierarchy |
-| Ordered history with compact memory | Recurrence and gating |
-| Content-dependent global relationships | Attention |
-| Long evolving context with efficient state | State-space modelling |
-| Explicit entities and relationships | Graph message passing |
-| Compression or latent representation | Autoencoding |
-| Multiple plausible outputs | Probabilistic or generative modelling |
+The engineering advantage is reduced attention complexity; the implementation cost is efficient interpolation/gather operations, which may be non-trivial on embedded NPUs.
 
-This table is not a product recipe. Modern systems frequently combine several families because real data contains spatial, temporal, relational, probabilistic, and resource constraints at the same time.
+## 10. Softmax scores are not calibrated probabilities by default
 
-## The lasting intuition
+For logits `z_i`:
 
-CNNs, RNNs, Transformers, graph networks, and state-space models are not isolated magic boxes. Each embeds a mathematical opinion about how information should move:
+$$p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}$$
 
-- convolution says nearby patterns and translation matter;
-- recurrence says the past can be compressed into state;
-- attention says relationships should depend on content;
-- state-space models say memory can evolve through structured dynamics;
-- graph networks say topology should control communication.
+ensures values sum to one, but does not guarantee statistical calibration.
 
-The most useful skill is not memorising model names. It is learning to identify the structure of a problem, choose an appropriate mathematical bias, define a meaningful objective, quantify uncertainty, and understand how the resulting computation will behave on real hardware.
+A model can be 99% confident and wrong more often than 1% of the time under domain shift.
+
+Calibration asks whether:
+
+$$P(correct\mid confidence\approx p)\approx p$$
+
+Metrics/tools include:
+
+- reliability diagrams;
+- expected calibration error;
+- negative log likelihood;
+- Brier score;
+- temperature scaling.
+
+For autonomy, uncertainty should often be tied to a physical state estimate (pose covariance, trajectory distribution, occupancy probability) rather than a generic neural “confidence.”
+
+## 11. Cross-entropy optimizes likelihood, not operational risk
+
+For target class `y`:
+
+$$L=-\log p_y$$
+
+Cross-entropy is principled maximum-likelihood training, but the downstream vehicle decision has asymmetric costs.
+
+Missing a pedestrian and misclassifying one vehicle type as another do not have equal consequences.
+
+Therefore evaluation/loss design often needs:
+
+```text
+class/scene reweighting
+focal loss for imbalance
+geometry-aware regression losses
+uncertainty likelihood losses
+multi-task weighting
+rare/ODD slice metrics
+```
+
+The training objective determines what errors the optimizer considers expensive; the safety architecture determines what errors the vehicle can tolerate. Those are connected but not identical.
+
+## 12. Regression should model the geometry of the output space
+
+Using plain L2 everywhere can be wrong.
+
+For periodic heading:
+
+```text
+179° and -179° differ numerically by 358°
+physically by 2°
+```
+
+Better representations include:
+
+$$[\sin\theta,\cos\theta]$$
+
+or wrapped angular losses.
+
+For rotations in 3D, quaternion/SO(3) geometry matters. For boxes, IoU-like/geometric losses can better match task behavior than independent coordinate L2.
+
+The output representation is part of the optimization problem.
+
+## 13. Backpropagation is repeated vector-Jacobian product, not a symbolic derivative dump
+
+For a composition:
+
+$$y=f_L(f_{L-1}(...f_1(x)))$$
+
+reverse-mode autodiff propagates gradients using local Jacobian-vector products.
+
+The memory cost comes from values/intermediates needed for backward, which is why training activation memory is often much larger than inference memory.
+
+Checkpointing trades compute for memory by recomputing selected activations during backward.
+
+For an autonomy project, this distinction explains why a model that fits comfortably for inference on a GPU can require far more memory during training.
+
+## 14. Optimizer state can exceed weight memory
+
+For Adam-like optimization, parameters can have:
+
+```text
+weights
+gradients
+first moment
+second moment
+possibly master FP32 weights
+```
+
+A nominal 1 GB FP16 model can therefore require several GB beyond its inference weight size during training.
+
+This is relevant when estimating whether full fine-tuning, LoRA/adapters, or frozen-backbone training fits the available hardware.
+
+## 15. Mixed precision changes dynamic range and accumulation behavior
+
+FP16, BF16 and INT8 have different numerical properties.
+
+### FP16
+
+More mantissa precision than BF16 but smaller exponent range; training often needs loss scaling.
+
+### BF16
+
+FP32-like exponent range with fewer mantissa bits; often robust for training on supporting hardware.
+
+### INT8
+
+Requires quantization scale/zero-point and often accumulates into wider integer precision.
+
+For affine quantization:
+
+$$q=round(x/s)+z$$
+
+with approximate reconstruction:
+
+$$x\approx s(q-z)$$
+
+Quantization error depends on dynamic range, outliers and per-tensor/per-channel scaling. It is a model-quality change, not merely a storage optimization.
+
+## 16. Arithmetic intensity determines whether FLOPs matter
+
+A simplified roofline view is:
+
+$$Performance \le \min(PeakCompute,\ Bandwidth\times ArithmeticIntensity)$$
+
+with:
+
+$$ArithmeticIntensity=\frac{operations}{bytes\ moved}$$
+
+Large matrix multiplies/convolutions can be compute-efficient. Scatter/gather, sparse indexing, depthwise convolution or small kernels may become bandwidth/dispatch limited.
+
+For autonomy deployment, operators such as:
+
+```text
+voxelization
+scatter-add
+grid sampling
+non-max suppression
+sparse convolution
+attention gather
+```
+
+can dominate latency despite modest FLOP counts.
+
+## 17. State-space models are learned dynamical systems
+
+A linear discrete state-space model is:
+
+$$h_{t+1}=Ah_t+Bx_t$$
+
+$$y_t=Ch_t+Dx_t$$
+
+The eigenstructure of `A` determines how state modes decay, persist or grow.
+
+Modern selective SSMs make parameters/input gates data-dependent while retaining computational structure that supports efficient scans.
+
+The useful comparison with attention is not “SSM is newer.” It is:
+
+```text
+attention: explicit content-dependent retrieval from stored tokens
+SSM: compressed evolving state with structured recurrence
+```
+
+For streaming autonomy, state size and reset semantics can be as important as sequence complexity.
+
+## 18. Temporal models need real elapsed time when sampling is irregular
+
+A discrete model implicitly assumes some sample interval. If sensor/model updates occur with variable `Δt`, the transition should account for it.
+
+For a continuous linear system:
+
+$$\dot h=Ah+Bx$$
+
+its discrete transition over interval `\Delta t` is:
+
+$$h_{t+\Delta t}=e^{A\Delta t}h_t+...$$
+
+This illustrates why blindly feeding irregular sensor updates into a model trained at fixed cadence can change the effective dynamics.
+
+Even when the neural model is not derived from continuous dynamics, encoding real `Δt` makes the time contract explicit.
+
+## 19. Bayesian reasoning clarifies fusion
+
+Given prior state `x` and measurement `z`:
+
+$$P(x|z)\propto P(z|x)P(x)$$
+
+This decomposition is useful even when the implementation is learned.
+
+```text
+prior / temporal state
+        ×
+measurement likelihood/evidence
+        ↓
+posterior/current belief
+```
+
+Camera, LiDAR and radar have different likelihood structures and uncertainty. Fusion should therefore reconcile evidence rather than simply average feature vectors.
+
+A world model can be viewed as a learned approximation to repeated prediction and Bayesian-style correction.
+
+## 20. Coordinate transforms live on groups, not ordinary vectors
+
+Rigid-body pose is an element of SE(3):
+
+$$T=\begin{bmatrix}R&t\\0&1\end{bmatrix}$$
+
+Composition is matrix multiplication; inverse is:
+
+$$T^{-1}=\begin{bmatrix}R^T&-R^Tt\\0&1\end{bmatrix}$$
+
+Rotations belong to SO(3), so naive addition/subtraction of Euler angles is not generally correct.
+
+This mathematics underlies:
+
+- sensor extrinsics;
+- ego-motion compensation;
+- LiDAR deskew;
+- camera projection;
+- BEV temporal warping;
+- localization.
+
+Learning does not make the group structure optional.
+
+## 21. Camera projection exposes where learning begins
+
+For 3D camera-coordinate point `P=[X,Y,Z]^T`:
+
+$$\lambda\begin{bmatrix}u\\v\\1\end{bmatrix}=KP$$
+
+Back-projecting an image point gives a ray:
+
+$$P=dK^{-1}p$$
+
+The unknown depth `d` is exactly where camera-to-BEV needs additional information or learned inference.
+
+This is a useful way to divide autonomy math:
+
+```text
+known geometry -> compute exactly
+unknown depth/semantics/behavior -> estimate/learn
+```
+
+## 22. Sparse representations trade arithmetic for indexing complexity
+
+LiDAR/voxel networks exploit the fact that most 3D cells are empty.
+
+If dense volume occupancy is `ρ << 1`, sparse computation can reduce arithmetic dramatically. But runtime now carries:
+
+```text
+active coordinate lists
+hash/index maps
+neighbor lookup
+scatter/gather metadata
+```
+
+The theoretical savings depend on whether the target hardware/compiler handles these operations efficiently.
+
+Sparsity is therefore both a mathematical prior and a software/hardware data-structure decision.
+
+## 23. Diffusion models are iterative conditional density models
+
+A diffusion model learns to reverse a noise process, often through a score/noise predictor.
+
+In physical AI, the important use is often **multimodal trajectory/action generation**, not image synthesis.
+
+Rather than regress one averaged action, a diffusion policy can sample multiple plausible action sequences from a learned conditional distribution.
+
+The tradeoff is iterative denoising latency. Truncated/consistency/flow-matching approaches attempt to reduce steps.
+
+The systems question is whether mode coverage gained is worth inference budget and how candidate actions are subsequently constrained.
+
+## 24. Information bottlenecks are architectural decisions
+
+Every representation discards information:
+
+```text
+RGB -> deep C5 features: spatial detail reduced
+LiDAR -> pillars: vertical distribution compressed
+radar -> CFAR points: sub-threshold signal discarded
+objects -> tracks: raw measurement ambiguity compressed
+BEV -> object list: unknown/free spatial evidence can disappear
+```
+
+Downstream models cannot recover information that was deterministically removed upstream unless priors hallucinate it.
+
+A powerful architecture skill is therefore deciding **where information is allowed to become irreversible**.
+
+## 25. The runtime graph is the final mathematics that matters
+
+The framework graph may be transformed by:
+
+```text
+constant folding
+operator decomposition
+fusion
+layout conversion
+quantization
+partitioning across CPU/GPU/NPU
+```
+
+So performance and numerical behavior must ultimately be measured on the lowered graph.
+
+A useful end-to-end model cost is:
+
+$$T_{e2e}=T_{pre}+T_{queue}+T_{compute}+T_{sync}+T_{post}+T_{handoff}$$
+
+not simply neural kernel time.
+
+## 26. How to read the rest of the autonomy series mathematically
+
+When encountering a new model, ignore the brand name first and ask:
+
+```text
+What are the input/output tensor semantics?
+Which axes are mixed locally/globally?
+What geometry is computed explicitly?
+Where is uncertainty represented?
+What state persists across time?
+What information bottleneck is introduced?
+What is the activation/memory scaling?
+Which operators dominate the deployed graph?
+```
+
+Those questions make ResNet, BEVFormer, BEVFusion, ConvGRU, SSMs and world models comparable at the level that actually matters for system design.
