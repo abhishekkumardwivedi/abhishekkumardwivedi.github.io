@@ -13,17 +13,21 @@ This Worker provides GitHub OAuth login and a server-side publishing API for the
 
 ## One-time setup
 
-### 1. Create a GitHub OAuth App
+### 1. Deploy the Worker once to obtain its URL
+
+From this directory, run `npm install`, `npx wrangler login`, and `npx wrangler deploy`. The Worker URL will be printed by Wrangler. It is safe to deploy before configuring secrets; login and publishing will not work until the remaining steps are complete.
+
+### 2. Create a GitHub OAuth App
 
 In GitHub: Settings → Developer settings → OAuth Apps → New OAuth App.
 
 - Application name: Personal Knowledge Hub Authoring
 - Homepage URL: `https://abhishekkumardwivedi.github.io`
-- Authorization callback URL: `https://<your-worker-name>.<your-cloudflare-subdomain>.workers.dev/auth/callback`
+- Authorization callback URL: `<your-worker-url>/auth/callback` (use the exact URL printed by Wrangler, followed by `/auth/callback`)
 
 Copy the Client ID. Generate a Client Secret.
 
-### 2. Create a fine-grained repository token
+### 3. Create a fine-grained repository token
 
 Create a fine-grained personal access token restricted to:
 
@@ -33,14 +37,7 @@ Create a fine-grained personal access token restricted to:
 
 Set an expiry and rotate it periodically.
 
-### 3. Install and configure Wrangler
-
-From this directory:
-
-```sh
-npm install --save-dev wrangler
-npx wrangler login
-```
+### 4. Configure Worker secrets
 
 Set secrets (Wrangler prompts for each value):
 
@@ -55,13 +52,11 @@ Use a long random value (at least 32 random bytes) for `SESSION_SECRET`.
 
 The allowed GitHub numeric user ID is configured in `wrangler.toml` as `6102130`. This is the repository owner's immutable account ID. The Worker rejects every other GitHub account.
 
-### 4. Deploy the Worker
+After setting secrets, redeploy the Worker:
 
 ```sh
 npx wrangler deploy
 ```
-
-Copy the deployed `workers.dev` URL.
 
 ### 5. Connect the static author page
 
