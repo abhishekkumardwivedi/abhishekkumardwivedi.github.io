@@ -51,7 +51,6 @@ export default defineConfig({
       },
       sidebar: [
         { label: 'Profile', items: [
-          { label: 'Home', slug: '' },
           { label: 'About Me', slug: 'about' },
           { label: 'Experience', slug: 'experience' },
           { label: 'Projects', slug: 'projects' }
