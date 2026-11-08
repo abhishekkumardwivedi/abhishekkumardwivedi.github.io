@@ -1,0 +1,147 @@
+---
+import { AUTHOR_API_BASE } from '../config/author';
+const apiBase = AUTHOR_API_BASE.replace(/\/$/, '');
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="robots" content="noindex,nofollow"/>
+<title>Private article editor | Abhishek Kumar Dwivedi</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f5f7fb;color:#172033}.shell{width:min(1100px,calc(100% - 32px));margin:40px auto}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.brand{font-size:14px;color:#526078;text-decoration:none}h1{margin:0;font-size:clamp(26px,4vw,36px);letter-spacing:-.04em}.sub{color:#64748b;margin:8px 0 0;line-height:1.55}.panel{background:white;border:1px solid #dce3ed;border-radius:18px;padding:clamp(18px,3vw,30px);box-shadow:0 12px 36px rgb(15 23 42 / 5%)}.login{max-width:520px;margin:10vh auto;text-align:center}.login-mark{font-size:36px;margin-bottom:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}label{display:block;font-size:13px;font-weight:650;color:#334155;margin:0 0 7px}input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px 12px;background:#fff;color:#172033;font:inherit;font-size:14px}input:focus,select:focus,textarea:focus{outline:3px solid #bfdbfe;border-color:#2563eb}textarea{resize:vertical;line-height:1.6}#body{min-height:430px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}.field{margin-bottom:17px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}button{border:0;border-radius:9px;padding:10px 14px;background:#1d4ed8;color:white;font:inherit;font-size:14px;font-weight:650;cursor:pointer}button.secondary{background:#e8eef7;color:#243247}button:disabled{opacity:.55;cursor:wait}.toolbar button{padding:7px 10px;font-size:12px}.actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}.status{min-height:22px;margin-top:14px;font-size:13px;color:#475569}.status.error{color:#b91c1c}.status.success{color:#047857}.user{font-size:13px;color:#475569}.hint{font-size:12px;color:#64748b;line-height:1.5}.hidden{display:none!important}@media(max-width:700px){.grid{grid-template-columns:1fr}.shell{margin:20px auto}.top{align-items:flex-start}.actions{align-items:stretch;flex-direction:column}.actions button{width:100%}}@media(prefers-color-scheme:dark){body{background:#0b1220;color:#e2e8f0}.panel{background:#111c2e;border-color:#29364a}.sub,.brand,.user,.hint{color:#a3b2c7}label{color:#d4deeb}input,select,textarea{background:#0b1220;color:#e2e8f0;border-color:#42516a}button.secondary{background:#26364e;color:#e2e8f0}}
+</style>
+</head>
+<body data-api-base={apiBase}><main class="shell">
+<div class="top"><a class="brand" href="/">← Back to knowledge hub</a><span id="user" class="user"></span></div>
+<section id="login-panel" class="panel login"><div class="login-mark" aria-hidden="true">✍</div><h1>Author login</h1><p class="sub">Sign in with the GitHub account authorized to publish articles on this site.</p><p class="hint">The article editor is private. Published articles remain publicly readable.</p><button id="login" type="button">Continue with GitHub</button><p id="login-status" class="status" role="status"></p></section>
+<section id="editor-panel" class="panel hidden"><h1>Write a technical article</h1><p class="sub">Create a Markdown article. Publishing commits it to the site repository and triggers the normal GitHub Pages build.</p>
+<form id="article-form">
+<div class="field"><label for="title">Title</label><input id="title" name="title" maxlength="160" required placeholder="e.g. Understanding Android process memory"/></div>
+<div class="grid"><div class="field"><label for="category">Category</label><select id="category" name="category"><option value="algorithms">Algorithms</option><option value="android">Android / AAOS</option><option value="automotive">Automotive</option><option value="embedded-linux">Embedded Linux</option><option value="system-design">System Design</option><option value="leadership">Leadership</option><option value="robotics">Robotics</option><option value="research">Research & AI</option><option value="general">General</option></select></div><div class="field"><label for="tags">Tags (comma separated)</label><input id="tags" name="tags" maxlength="300" placeholder="C++, arrays, interview"/></div></div>
+<div class="field"><label for="description">Short description</label><input id="description" name="description" maxlength="300" required placeholder="What will the reader learn?"/></div>
+<div class="field"><label for="body">Article body (Markdown)</label><div class="toolbar">
+<button class="secondary" type="button" data-insert="## Heading\n\n">Heading</button><button class="secondary" type="button" data-insert="\n\n```cpp\n// C++ code\n```\n\n">C++ code</button><button class="secondary" type="button" data-insert="\n\n```plantuml\n@startuml\nAlice -> Bob: message\n@enduml\n```\n\n">PlantUML</button><button class="secondary" type="button" data-insert="\n\n:::tip Key insight\nWrite the important observation here.\n:::\n\n">Highlight</button><button class="secondary" type="button" data-insert="\n\n> Important note: write your note here.\n\n">Quote</button>
+</div><textarea id="body" name="body" required placeholder="## Problem / Context&#10;&#10;Describe the problem, your intuition, approach, implementation and takeaways..."></textarea><p class="hint">Use standard Markdown. Code fences support cpp, java, python, bash, xml and plantuml. PlantUML source is preserved as code; a renderer can be added separately.</p></div>
+<div class="actions"><span class="hint">Publishing creates a new article; duplicate slugs are rejected.</span><button id="publish" type="submit">Publish article</button></div>
+</form><div id="status" class="status" role="status" aria-live="polite"></div><div class="actions"><a class="brand" href="/">View published library</a><button id="logout" class="secondary" type="button">Sign out</button></div></section>
+</main>
+<script>
+type ApiUser = { login: string };
+type ApiResult = { error?: string; user?: ApiUser; warning?: string; url?: string };
+const $ = <T extends HTMLElement>(selector: string): T => {
+  const element = document.querySelector<T>(selector);
+  if (!element) throw new Error(`Required page element not found: ${selector}`);
+  return element;
+};
+const API = document.body.dataset.apiBase ?? '';
+const loginPanel = $<HTMLElement>('#login-panel');
+const editorPanel = $<HTMLElement>('#editor-panel');
+const loginStatus = $<HTMLElement>('#login-status');
+const status = $<HTMLElement>('#status');
+const userLabel = $<HTMLElement>('#user');
+const tokenKey = 'private-author-session';
+
+function setStatus(message: string, kind = ''): void {
+  status.textContent = message;
+  status.className = 'status ' + kind;
+}
+function setLoginStatus(message: string, kind = ''): void {
+  loginStatus.textContent = message;
+  loginStatus.className = 'status ' + kind;
+}
+function showEditor(user: ApiUser): void {
+  loginPanel.classList.add('hidden');
+  editorPanel.classList.remove('hidden');
+  userLabel.textContent = 'Signed in as @' + user.login;
+}
+function getToken(): string | null {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const incoming = hash.get('token');
+  if (incoming) {
+    sessionStorage.setItem(tokenKey, incoming);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  return sessionStorage.getItem(tokenKey);
+}
+async function api(path: string, options: RequestInit = {}): Promise<ApiResult> {
+  const token = getToken();
+  const headers = new Headers(options.headers);
+  if (token) headers.set('Authorization', 'Bearer ' + token);
+  if (options.body) headers.set('Content-Type', 'application/json');
+  const response = await fetch(API + path, { ...options, headers });
+  const payload = await response.json().catch(() => ({})) as ApiResult;
+  if (!response.ok) throw new Error(payload.error || 'Request failed (' + response.status + ')');
+  return payload;
+}
+$('#login').addEventListener('click', () => {
+  if (!API || API.includes('SET-YOUR-WORKER-URL')) {
+    setLoginStatus('The authoring service is not configured yet.');
+    return;
+  }
+  location.href = API + '/auth/login';
+});
+document.querySelectorAll<HTMLButtonElement>('[data-insert]').forEach((button) =>
+  button.addEventListener('click', () => {
+    const editor = $<HTMLTextAreaElement>('#body');
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const snippet = (button.dataset.insert ?? '').replace(/\\n/g, '\n');
+    editor.setRangeText(snippet, start, end, 'end');
+    editor.focus();
+  })
+);
+$<HTMLFormElement>('#article-form').addEventListener('submit', async (event: SubmitEvent) => {
+  event.preventDefault();
+  const formElement = event.currentTarget as HTMLFormElement;
+  const publish = $<HTMLButtonElement>('#publish');
+  publish.disabled = true;
+  setStatus('Publishing and committing the Markdown article…');
+  const form = new FormData(formElement);
+  const payload = {
+    title: String(form.get('title') ?? ''),
+    category: String(form.get('category') ?? ''),
+    tags: String(form.get('tags') ?? '').split(',').map((tag) => tag.trim()).filter(Boolean),
+    description: String(form.get('description') ?? ''),
+    body: String(form.get('body') ?? '')
+  };
+  try {
+    const result = await api('/api/articles', { method: 'POST', body: JSON.stringify(payload) });
+    setStatus(
+      result.warning
+        ? 'Article committed, but the index update needs attention: ' + result.warning
+        : 'Published successfully. The site build has been triggered.',
+      'success'
+    );
+    if (result.url) {
+      const link = document.createElement('a');
+      link.href = result.url;
+      link.textContent = ' Open article';
+      link.style.marginLeft = '8px';
+      status.append(link);
+    }
+    formElement.reset();
+  } catch (error: unknown) {
+    setStatus(error instanceof Error ? error.message : 'Publishing failed.', 'error');
+  } finally {
+    publish.disabled = false;
+  }
+});
+$('#logout').addEventListener('click', () => {
+  sessionStorage.removeItem(tokenKey);
+  editorPanel.classList.add('hidden');
+  loginPanel.classList.remove('hidden');
+  userLabel.textContent = '';
+  setLoginStatus('You have signed out.');
+});
+(async (): Promise<void> => {
+  if (!API || API.includes('SET-YOUR-WORKER-URL') || !getToken()) return;
+  try {
+    const me = await api('/api/me');
+    if (!me.user) throw new Error('The author service did not return a user.');
+    showEditor(me.user);
+  } catch {
+    sessionStorage.removeItem(tokenKey);
+    setLoginStatus('Your session has expired. Please sign in again.');
+  }
+})();
+</script></body></html>

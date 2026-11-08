@@ -1,0 +1,17 @@
+name: Validate Astro site
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Astro and Starlight
+        uses: withastro/action@v5

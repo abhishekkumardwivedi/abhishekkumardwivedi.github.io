@@ -13,6 +13,8 @@ This is a structured engineering library rather than a chronological blog. The t
   <LinkCard title="Safety & Assurance" description="SOTIF, functional safety, AI assurance, cybersecurity, systems engineering, and release evidence." href="/articles/safety-assurance/" />
   <LinkCard title="Algorithms & Problem Solving" description="Reusable algorithm patterns, data structures, complexity reasoning, and concise solution notes." href="/articles/algorithms/" />
   <LinkCard title="Business, Product & Leadership" description="Product strategy, entrepreneurship, engineering management, organisational design, and innovation." href="/articles/business-leadership/" />
+  <LinkCard title="Personal Notes" description="Your own categorized notes, interview solutions, code snippets, highlights and diagrams." href="/articles/notes/" />
+
 </CardGrid>
 
 ## Recommended autonomy path

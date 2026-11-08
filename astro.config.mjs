@@ -46,7 +46,8 @@ export default defineConfig({
       ],
       customCss: ['./src/styles/custom.css'],
       components: {
-        SiteTitle: './src/components/SiteTitle.astro'
+        SiteTitle: './src/components/SiteTitle.astro',
+        Footer: './src/components/AuthorFab.astro'
       },
       sidebar: [
         { label: 'Profile', items: [
@@ -115,7 +116,8 @@ export default defineConfig({
               ]
             },
             { label: 'Algorithms & Problem Solving', slug: 'articles/algorithms' },
-            { label: 'Business, Product & Leadership', slug: 'articles/business-leadership' }
+            { label: 'Business, Product & Leadership', slug: 'articles/business-leadership' },
+            { label: 'Personal Notes', slug: 'articles/notes' }
           ]
         }
       ]
