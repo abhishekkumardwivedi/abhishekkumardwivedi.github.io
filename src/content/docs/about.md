@@ -1,13 +1,115 @@
 ---
 title: "About Me"
-description: "Background, interests, and engineering perspective of Abhishek Kumar Dwivedi."
+description: "A visual timeline of Abhishek Kumar Dwivedi's engineering journey, from embedded foundations to intelligent vehicle platforms."
 ---
 
-My perspective as an engineer and product leader is strongly shaped by my **Master’s in Strategic Entrepreneurship & Innovation from King’s College London**. The programme helped me look beyond whether a technology can be built and ask equally important questions: Which problem should it solve? Who will value it? How should the product, business model, organisation, and roadmap evolve together?
+<div class="about-hero">
+  <div class="about-eyebrow">ENGINEERING · ARCHITECTURE · PRODUCT THINKING</div>
+  <h2>Building systems from silicon to the vehicle experience</h2>
+  <p>My career has moved across hardware, embedded software, operating systems, connected products, intelligent edge systems, and automotive platforms. The common thread is an interest in understanding the complete system—and turning complex technology into useful, reliable products.</p>
+  <div class="about-stats">
+    <div><strong>20+</strong><span>Years in engineering</span></div>
+    <div><strong>HW → AI</strong><span>Across the technology stack</span></div>
+    <div><strong>Mobility</strong><span>Current product focus</span></div>
+  </div>
+</div>
 
-I later completed **Agile Leadership at Stanford Graduate School of Business**, strengthening my approach to leading change, aligning multidisciplinary teams, and translating uncertainty into focused execution.
+## Career journey
 
-These experiences complement around two decades of hands-on engineering. I am not limited to one operating system, technology layer, or product category. My career has moved from firmware and hardware-facing development to operating systems and platforms, security and connectivity, intelligent edge systems, automotive architecture, product ownership, and engineering leadership.
+<div class="career-timeline">
+  <article class="career-stop current">
+    <div class="career-year"><span>2020</span><small>Present</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">AUTOMOTIVE · PRODUCT ARCHITECTURE</span><span class="career-current">CURRENT</span></div>
+      <h3>Aptiv</h3>
+      <h4>Product Architect · Digital Cockpit</h4>
+      <p>Leading digital cockpit architecture across system and software layers, connecting customer intent with technical feasibility and production-ready platform design.</p>
+      <div class="career-tags"><span>Automotive platforms</span><span>Embedded Linux</span><span>Android Automotive</span><span>QNX</span><span>Qualcomm SoC</span><span>Camera & display</span><span>Functional safety</span><span>Cybersecurity</span></div>
+    </div>
+  </article>
+
+  <article class="career-stop">
+    <div class="career-year"><span>2017</span><small>2020</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">ENTREPRENEURSHIP · INTELLIGENT SYSTEMS</span></div>
+      <h3>Startup & independent product development</h3>
+      <h4>Embedded / IoT Product Engineering</h4>
+      <p>Built across the product lifecycle—from problem discovery and architecture to electronics, firmware, connected applications, vendors, and go-to-market exploration.</p>
+      <div class="career-tags"><span>IoT platforms</span><span>PCB & electronics</span><span>Computer vision</span><span>Parking automation</span><span>Connected devices</span></div>
+    </div>
+  </article>
+
+  <article class="career-stop">
+    <div class="career-year"><span>2016</span><small>2017</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">EMBEDDED COMPUTING</span></div>
+      <h3>Intel</h3>
+      <h4>IoT Platform Engineering</h4>
+      <p>Worked with Intel Quark and Atom-class embedded platforms, exploring early boot and platform firmware foundations.</p>
+      <div class="career-tags"><span>Intel Quark / Atom</span><span>UEFI</span><span>iROM</span><span>IoT</span></div>
+    </div>
+  </article>
+
+  <article class="career-stop">
+    <div class="career-year"><span>2015</span><small>2016</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">ANDROID · MODULAR COMPUTING</span></div>
+      <h3>Linaro · Google Project Ara ecosystem</h3>
+      <h4>Platform Engineering · Concept to MVP</h4>
+      <p>Contributed to an ambitious modular-device initiative, working through platform integration and the engineering steps needed to turn a concept into a demonstrable system.</p>
+      <div class="career-tags"><span>Android</span><span>Platform integration</span><span>Prototyping</span></div>
+    </div>
+  </article>
+
+  <article class="career-stop">
+    <div class="career-year"><span>2013</span><small>2015</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">OPERATING SYSTEMS</span></div>
+      <h3>Android Platform Engineering</h3>
+      <h4>Framework · System Services · Native Daemons</h4>
+      <p>Moved from kernel-facing work into Android framework and system-level software, developing a broader understanding of how applications, services, HALs, and the OS work together.</p>
+      <div class="career-tags"><span>Android / AOSP</span><span>Framework</span><span>System services</span><span>Native C++</span></div>
+    </div>
+  </article>
+
+  <article class="career-stop">
+    <div class="career-year"><span>2006</span><small>2013</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">LOW-LEVEL SOFTWARE · SILICON</span></div>
+      <h3>Qualcomm & embedded platform engineering</h3>
+      <h4>Boot · Kernel · Device Drivers</h4>
+      <p>Built strong foundations in ARM-based systems, bootloaders, Linux kernel configuration and drivers, hardware interfaces, and low-level debugging.</p>
+      <div class="career-tags"><span>ARM</span><span>U-Boot</span><span>Linux kernel</span><span>PCI</span><span>I²C / SPI / USB</span><span>Trace32</span></div>
+    </div>
+  </article>
+
+  <article class="career-stop">
+    <div class="career-year"><span>2005</span><small>2006</small></div>
+    <div class="career-card">
+      <div class="career-card-top"><span class="career-kicker">FOUNDATION</span></div>
+      <h3>Electronics & board-level engineering</h3>
+      <h4>Circuits · PCB · Hardware fundamentals</h4>
+      <p>Started close to the physical product, building an understanding of circuits, board-level design, and the relationship between hardware behaviour and software.</p>
+      <div class="career-tags"><span>Electronics</span><span>PCB</span><span>Hardware interfaces</span></div>
+    </div>
+  </article>
+</div>
+
+## Education & leadership development
+
+<div class="about-education">
+  <div class="education-card"><span class="education-year">2022</span><h3>King's College London</h3><p>MS · Strategic Entrepreneurship & Innovation</p><small>Product strategy, innovation, business models, and translating technology into viable products.</small></div>
+  <div class="education-card"><span class="education-year">2023</span><h3>Stanford Graduate School of Business</h3><p>Agile Leadership</p><small>Leading change, aligning teams, and creating clarity in complex environments.</small></div>
+</div>
+
+## The engineering thread
+
+<div class="about-capabilities">
+  <div><span>01</span><strong>Complex systems</strong><p>Reasoning across hardware, software, networks, compute, and product constraints.</p></div>
+  <div><span>02</span><strong>Embedded & platform engineering</strong><p>Staying close to implementation, performance, memory, interfaces, and failure behaviour.</p></div>
+  <div><span>03</span><strong>Intelligent edge & autonomy</strong><p>Connecting sensing, perception, heterogeneous compute, and real-world deployment.</p></div>
+  <div><span>04</span><strong>Technical leadership</strong><p>Turning ambiguity into architecture, decisions, aligned teams, and executable plans.</p></div>
+</div>
 
 ## From hardware to platform software
 
@@ -69,3 +171,4 @@ The common thread across my work is curiosity about complete systems. I enjoy mo
 I am most energised by opportunities that combine complex-system architecture, embedded and platform engineering, intelligent edge computing, product ownership, and technical leadership—particularly in automotive and other safety-relevant cyber-physical products.
 
 Outside formal work, I enjoy learning, writing, prototyping, fitness, travel, and exploring how technology can make physical systems safer, more understandable, and more useful.
+
