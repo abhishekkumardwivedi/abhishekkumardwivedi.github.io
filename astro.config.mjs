@@ -115,7 +115,7 @@ export default defineConfig({
               ]
             },
             { label: 'Algorithms & Problem Solving', slug: 'articles/algorithms' },
-            { label: 'Business, Product & Leadership', slug: 'articles/business-leadership' }
+            { label: 'Business, Product & Leadership', slug: 'articles/business-leadership' },\n            { label: 'Personal Notes', slug: 'articles/notes' }
           ]
         }
       ]
