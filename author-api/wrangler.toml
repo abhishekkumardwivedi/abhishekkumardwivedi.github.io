@@ -1,0 +1,8 @@
+name = "private-knowledge-hub-author-api"
+main = "src/index.js"
+compatibility_date = "2026-11-08"
+
+[vars]
+SITE_ORIGIN = "https://abhishekkumardwivedi.github.io"
+GITHUB_REPO = "abhishekkumardwivedi/abhishekkumardwivedi.github.io"
+GITHUB_ALLOWED_USER_ID = "6102130"
