@@ -52,4 +52,4 @@ The [nuScenes Autonomy Pipeline](/articles/nuscenes-autonomy-pipeline/) is the s
 
 ## Publishing a new article
 
-Create a Markdown file under `src/content/docs/articles/`, add a title and description at the top, and add it to the appropriate section in the site navigation. GitHub Actions rebuilds and publishes the site automatically.
+Create a Markdown file in the relevant topic folder under `src/content/docs/articles/` (for example, `autonomy-edge-ai/` or `embedded-automotive/`). Add a title and description in its frontmatter, then add its sidebar entry in `astro.config.mjs`. GitHub Actions rebuilds and publishes the site automatically. We will remove the manual sidebar step when navigation is moved to Markdown metadata.
